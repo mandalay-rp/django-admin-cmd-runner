@@ -1,0 +1,253 @@
+{% load static %}
+<!doctype html>
+<html lang="ru">
+    <head>
+        <meta charset="utf-8">
+        <title>Command Runner</title>
+        <style>
+body { font-family: system-ui, sans-serif; margin: 24px; max-width: 1100px; }
+.toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+select, input, button { padding: 6px 10px; font-size: 14px; }
+#args-input { flex: 1; min-width: 240px; }
+#progress { width: 100%; height: 16px; background: #eee; border-radius: 8px;
+    overflow: hidden; margin: 12px 0 4px; }
+    #progress > div { height: 100%; width: 0; background: #4caf50; transition: width .2s; }
+    #log { background: #111; color: #ddd; padding: 12px; height: 420px; overflow: auto;
+        font-family: ui-monospace, monospace; font-size: 12px; white-space: pre-wrap;
+        border-radius: 6px; }
+.status { font-weight: 600; }
+.status-success { color: #2e7d32; }
+.status-error   { color: #c62828; }
+.status-running { color: #1565c0; }
+.status-stopping{ color: #ef6c00; }
+.status-stopped { color: #6d4c41; }
+.status-queued  { color: #6a1b9a; }
+.status-not_found { color: #c62828; }
+.hidden { display: none; }
+.error-box { background: #ffebee; color: #b71c1c; padding: 8px 12px; border-radius: 6px;
+    white-space: pre-wrap; font-family: ui-monospace, monospace;
+    font-size: 12px; margin-top: 12px; }
+    #args-help { font-size: 12px; color: #555; margin-bottom: 12px; min-height: 1em; }
+        </style>
+    </head>
+    <body>
+        <h1>Command Runner</h1>
+
+        <div class="toolbar">
+            <select id="command-select">
+                {% for c in commands %}
+                <option value="{{ c.name }}" data-help="{{ c.args_help|default:'' }}">{{ c.label }}</option>
+                {% empty %}
+                <option value="">(нет доступных команд — задайте COMMAND_RUNNER_COMMANDS)</option>
+                {% endfor %}
+            </select>
+            <input id="args-input" type="text" placeholder="Аргументы (например: --steps 5)">
+            <button id="btn-start" type="button">Запустить</button>
+            <button id="btn-stop"  type="button" class="hidden">Остановить</button>
+            <span id="status" class="status"></span>
+        </div>
+        <div id="args-help"></div>
+
+        <div id="progress"><div></div></div>
+        <div id="progress-text" style="font-size:12px;color:#555;"></div>
+        <div id="error-box" class="error-box hidden"></div>
+
+        <div id="log"></div>
+
+        {{ urls|json_script:"urls-data" }}
+        {{ current_run_id|json_script:"run-id-data" }}
+
+        <script>
+            (function () {
+                const URLS = JSON.parse(document.getElementById("urls-data").textContent);
+                const RUN_ID_FROM_SERVER = JSON.parse(document.getElementById("run-id-data").textContent);
+
+                const elStatus       = document.getElementById("status");
+                const elLog          = document.getElementById("log");
+                const elBar          = document.querySelector("#progress > div");
+                const elProgressText = document.getElementById("progress-text");
+                const elError        = document.getElementById("error-box");
+                const btnStart       = document.getElementById("btn-start");
+                const btnStop        = document.getElementById("btn-stop");
+                const select         = document.getElementById("command-select");
+                const argsInput      = document.getElementById("args-input");
+                const argsHelp       = document.getElementById("args-help");
+
+                let runId     = RUN_ID_FROM_SERVER || null;
+                let since     = 0;
+                let pollTimer = null;
+
+                function setStatus(st) {
+                    elStatus.textContent = st || "";
+                    elStatus.className = "status status-" + (st || "");
+                }
+
+                function showError(msg) {
+                    elError.textContent = msg;
+                    elError.classList.remove("hidden");
+                }
+                function clearError() {
+                    elError.classList.add("hidden");
+                    elError.textContent = "";
+                }
+
+                function appendLogs(lines) {
+                    for (const line of lines) {
+                        const div = document.createElement("div");
+                        div.textContent = line.msg;
+                        elLog.appendChild(div);
+                    }
+                    if (lines.length) elLog.scrollTop = elLog.scrollHeight;
+                }
+
+                function refreshHelp() {
+                    const opt = select.options[select.selectedIndex];
+                    const help = (opt && opt.dataset.help) || "";
+                    argsHelp.textContent = help ? ("Аргументы: " + help) : "";
+                }
+
+                async function fetchJson(url, options) {
+                    const r = await fetch(url, Object.assign({ redirect: "manual" }, options || {}));
+
+                    if (r.type === "opaqueredirect" || r.status === 0 || r.redirected) {
+                        const target = (r.url && r.url !== window.location.href) ? r.url : "/admin/login/";
+                        window.location.href = target;
+                        throw new Error("redirected");
+                    }
+
+                    const ct = (r.headers.get("content-type") || "").toLowerCase();
+                    if (!ct.includes("application/json")) {
+                        const text = await r.text();
+                        throw new Error(
+                            "Сервер вернул не JSON (HTTP " + r.status + "). " +
+                            "Первые 200 символов:\n" + text.slice(0, 200)
+                        );
+                    }
+
+                    const data = await r.json();
+                    if (!r.ok || data.ok === false) {
+                        const err = new Error("HTTP " + r.status + ": " + (data.error || "unknown"));
+                        err.payload = data;
+                        err.status = r.status;
+                        throw err;
+                    }
+                    return data;
+                }
+
+                async function poll() {
+                    if (!runId) return;
+                    try {
+                        const url = URLS.status.replace("__RUNID__", runId) + "?since=" + since;
+                        const data = await fetchJson(url, {
+                            headers: { "X-Requested-With": "XMLHttpRequest", "Accept": "application/json" },
+                        });
+
+                        const st = data.state;
+                        setStatus(st.status);
+
+                        const p = (st.progress && st.progress.percent) || 0;
+                        elBar.style.width = p + "%";
+                        elProgressText.textContent = st.progress && st.progress.message
+                            ? p + "% — " + st.progress.message
+                            : p + "%";
+
+                        appendLogs(data.log || []);
+                        since = data.since;
+
+                        if (st.error) showError(st.error); else clearError();
+
+                        const finished = ["success", "error", "stopped"].includes(st.status);
+                        btnStop.classList.toggle("hidden", finished || !runId);
+                        btnStart.disabled = !finished && !!runId;
+
+                        if (finished) stopPolling();
+                    } catch (e) {
+                        console.error("poll failed:", e);
+                        if (e.message === "redirected") return;
+                        if (e.status === 404) {
+                            stopPolling();
+                            setStatus("not_found");
+                            showError("Запуск не найден (возможно, истёк TTL состояния).");
+                            return;
+                        }
+                        showError(e.message || String(e));
+                    }
+                }
+
+                function startPolling() {
+                    stopPolling();
+                    pollTimer = setInterval(poll, 1000);
+                    poll();
+                }
+                function stopPolling() {
+                    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+                }
+
+                select.addEventListener("change", refreshHelp);
+                refreshHelp();
+
+                btnStart.addEventListener("click", async () => {
+                    const command = select.value;
+                    if (!command) return;
+                    const body = new FormData();
+                    body.append("command", command);
+                    body.append("args", argsInput.value || "");
+
+                    try {
+                        const data = await fetchJson(URLS.start, {
+                            method: "POST",
+                            body,
+                            headers: { "X-CSRFToken": getCookie("csrftoken"), "Accept": "application/json" },
+                        });
+                        runId = data.run_id;
+                        since = 0;
+                        elLog.innerHTML = "";
+                        clearError();
+                        btnStart.disabled = true;
+                        btnStop.classList.remove("hidden");
+                        window.history.replaceState(null, "", URLS.monitor.replace("__RUNID__", runId));
+                        startPolling();
+                    } catch (e) {
+                        if (e.message === "redirected") return;
+                        if (e.payload && e.payload.errors) {
+                            alert("Ошибка валидации:\n" + JSON.stringify(e.payload.errors, null, 2));
+                            return;
+                        }
+                        if (e.status === 409 && e.payload && e.payload.run_id) {
+                            window.location.href = URLS.monitor.replace("__RUNID__", e.payload.run_id);
+                            return;
+                        }
+                        alert("Не удалось запустить: " + (e.message || e));
+                    }
+                });
+
+                btnStop.addEventListener("click", async () => {
+                    if (!runId) return;
+                    btnStop.disabled = true;
+                    try {
+                        await fetchJson(URLS.stop.replace("__RUNID__", runId), {
+                            method: "POST",
+                            headers: { "X-CSRFToken": getCookie("csrftoken"), "Accept": "application/json" },
+                        });
+                    } catch (e) {
+                        if (e.message === "redirected") return;
+                        alert("Не удалось остановить: " + (e.message || e));
+                    } finally {
+                        btnStop.disabled = false;
+                    }
+                });
+
+                function getCookie(name) {
+                    const v = document.cookie.match("(^|;)\\s*" + name + "\\s*=\\s*([^;]+)");
+                    return v ? v.pop() : "";
+                }
+
+                if (runId) {
+                    btnStart.disabled = true;
+                    btnStop.classList.remove("hidden");
+                    startPolling();
+                }
+            })();
+        </script>
+    </body>
+</html>

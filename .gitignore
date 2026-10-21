@@ -1,0 +1,37 @@
+.ansible/inventory_temp
+.mypy_cache
+*.pyc
+.idea
+.env
+.venv*/
+.DS_Store
+.github
+media/
+media_*/
+*.sql
+!/stroykerbox/apps/utils/fixtures/default_db/*.sql
+*.psql
+*.sqlite3
+.coverage
+coverage.xml
+cache/
+pip-cache/
+src/
+# *.mo
+htmlcov
+docker_data/
+docker_data*/
+static_collected/
+/*.json
+stroykerbox/test_email/
+*,cover
+/*.csv
+/scripts/*
+# !/scripts/*.py
+!/scripts/generate_nginx_conf.sh
+/logs/
+*@neomake*
+/stroykerbox/settings/*.py
+!/stroykerbox/settings/dev.py
+!/stroykerbox/settings/constance.py
+!/stroykerbox/settings/base.py
