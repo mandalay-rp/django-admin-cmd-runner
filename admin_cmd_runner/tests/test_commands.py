@@ -1,4 +1,4 @@
-"""Тесты management-команд ``command_runner``."""
+"""Тесты management-команд ``admin_cmd_runner``."""
 
 from io import StringIO
 from unittest.mock import patch
@@ -6,7 +6,7 @@ from unittest.mock import patch
 from django.core.management import call_command
 from django.test import SimpleTestCase
 
-_DEMO_SLEEP = "command_runner.management.commands.demo_long_command.time.sleep"
+_DEMO_SLEEP = "admin_cmd_runner.management.commands.demo_long_command.time.sleep"
 
 
 class DemoLongCommandTests(SimpleTestCase):

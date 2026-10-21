@@ -2,7 +2,7 @@ from django.urls import path
 
 from . import views
 
-app_name = "command_runner"
+app_name = "admin_cmd_runner"
 
 urlpatterns = [
     path("", views.monitor_page, name="monitor_root"),

@@ -1,4 +1,4 @@
-"""Тесты бэкендов очередей :mod:`command_runner.queue`."""
+"""Тесты бэкендов очередей :mod:`admin_cmd_runner.queue`."""
 
 import unittest
 from unittest.mock import MagicMock, patch
@@ -7,7 +7,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.test import SimpleTestCase, override_settings
 
 try:
-    from command_runner.queue.celery_backend import (
+    from admin_cmd_runner.queue.celery_backend import (
         CeleryBackend,
         celery_execute_command,
     )
@@ -20,7 +20,7 @@ except ImportError:
 try:
     from rq.job import Job, JobStatus
 
-    from command_runner.queue.rq_backend import RqBackend
+    from admin_cmd_runner.queue.rq_backend import RqBackend
     HAS_RQ = True
 except ImportError:
     HAS_RQ = False
@@ -30,26 +30,26 @@ except ImportError:
 
 
 class GetBackendTests(SimpleTestCase):
-    """Тесты фабрики :func:`command_runner.queue.get_backend`."""
+    """Тесты фабрики :func:`admin_cmd_runner.queue.get_backend`."""
 
     @unittest.skipUnless(HAS_CELERY, "celery not installed")
     @override_settings(COMMAND_RUNNER_QUEUE="celery")
     def test_celery(self) -> None:
         """Настройка ``celery`` → ``CeleryBackend``."""
-        from command_runner.queue import get_backend
+        from admin_cmd_runner.queue import get_backend
         self.assertIsInstance(get_backend(), CeleryBackend)
 
     @unittest.skipUnless(HAS_RQ, "rq not installed")
     @override_settings(COMMAND_RUNNER_QUEUE="rq")
     def test_rq(self) -> None:
         """Настройка ``rq`` → ``RqBackend``."""
-        from command_runner.queue import get_backend
+        from admin_cmd_runner.queue import get_backend
         self.assertIsInstance(get_backend(), RqBackend)
 
     @override_settings(COMMAND_RUNNER_QUEUE="unknown")
     def test_unknown(self) -> None:
         """Неизвестный бэкенд → ``ImproperlyConfigured``."""
-        from command_runner.queue import get_backend
+        from admin_cmd_runner.queue import get_backend
         with self.assertRaises(ImproperlyConfigured):
             get_backend()
 
@@ -71,7 +71,7 @@ class CeleryBackendTests(SimpleTestCase):
         """``revoke`` вызывает ``control.revoke`` и возвращает ``"stopping"``."""
         backend = CeleryBackend()
         with patch(
-            "command_runner.queue.celery_backend.celery_app",
+            "admin_cmd_runner.queue.celery_backend.celery_app",
         ) as mock_app:
             result = backend.revoke("task-1")
         self.assertEqual(result, "stopping")
@@ -83,7 +83,7 @@ class CeleryBackendTests(SimpleTestCase):
         """Исключение в ``control.revoke`` → ``"not_found"``."""
         backend = CeleryBackend()
         with patch(
-            "command_runner.queue.celery_backend.celery_app",
+            "admin_cmd_runner.queue.celery_backend.celery_app",
         ) as mock_app:
             mock_app.control.revoke.side_effect = RuntimeError("boom")
             result = backend.revoke("task-1")
@@ -93,7 +93,7 @@ class CeleryBackendTests(SimpleTestCase):
         """Известный celery-state мапится в унифицированный."""
         backend = CeleryBackend()
         with patch(
-            "command_runner.queue.celery_backend.AsyncResult",
+            "admin_cmd_runner.queue.celery_backend.AsyncResult",
         ) as mock_ar:
             mock_ar.return_value.state = "STARTED"
             self.assertEqual(backend.get_status("t"), "running")
@@ -105,7 +105,7 @@ class CeleryBackendTests(SimpleTestCase):
         """Исключение при получении статуса → ``None``."""
         backend = CeleryBackend()
         with patch(
-            "command_runner.queue.celery_backend.AsyncResult",
+            "admin_cmd_runner.queue.celery_backend.AsyncResult",
             side_effect=RuntimeError("boom"),
         ):
             self.assertIsNone(backend.get_status("t"))
@@ -127,7 +127,7 @@ class RqBackendTests(SimpleTestCase):
         backend = RqBackend()
         job = self._mock_job(JobStatus.QUEUED)
         with patch(
-            "command_runner.queue.rq_backend.Job.fetch", return_value=job,
+            "admin_cmd_runner.queue.rq_backend.Job.fetch", return_value=job,
         ):
             result = backend.revoke("job-1")
         self.assertEqual(result, "cancelled")
@@ -138,9 +138,9 @@ class RqBackendTests(SimpleTestCase):
         backend = RqBackend()
         job = self._mock_job(JobStatus.STARTED)
         with patch(
-            "command_runner.queue.rq_backend.Job.fetch", return_value=job,
+            "admin_cmd_runner.queue.rq_backend.Job.fetch", return_value=job,
         ), patch(
-            "command_runner.queue.rq_backend.send_stop_job_command",
+            "admin_cmd_runner.queue.rq_backend.send_stop_job_command",
         ) as mock_stop:
             result = backend.revoke("job-1")
         self.assertEqual(result, "stopping")
@@ -154,15 +154,15 @@ class RqBackendTests(SimpleTestCase):
         worker.name = "worker-1"
 
         with patch(
-            "command_runner.queue.rq_backend.Job.fetch", return_value=job,
+            "admin_cmd_runner.queue.rq_backend.Job.fetch", return_value=job,
         ), patch(
-            "command_runner.queue.rq_backend.send_stop_job_command",
+            "admin_cmd_runner.queue.rq_backend.send_stop_job_command",
             side_effect=RuntimeError("boom"),
         ), patch(
-            "command_runner.queue.rq_backend._find_worker_for_job",
+            "admin_cmd_runner.queue.rq_backend._find_worker_for_job",
             return_value=worker,
         ), patch(
-            "command_runner.queue.rq_backend.send_kill_horse_command",
+            "admin_cmd_runner.queue.rq_backend.send_kill_horse_command",
         ) as mock_kill:
             result = backend.revoke("job-1")
 
@@ -174,7 +174,7 @@ class RqBackendTests(SimpleTestCase):
         backend = RqBackend()
         job = self._mock_job(JobStatus.FINISHED)
         with patch(
-            "command_runner.queue.rq_backend.Job.fetch", return_value=job,
+            "admin_cmd_runner.queue.rq_backend.Job.fetch", return_value=job,
         ):
             result = backend.revoke("job-1")
         self.assertEqual(result, "terminal")
@@ -186,7 +186,7 @@ class RqBackendTests(SimpleTestCase):
 
         backend = RqBackend()
         with patch(
-            "command_runner.queue.rq_backend.Job.fetch",
+            "admin_cmd_runner.queue.rq_backend.Job.fetch",
             side_effect=NoSuchJobError,
         ):
             result = backend.revoke("job-1")
@@ -207,7 +207,7 @@ class RqBackendTests(SimpleTestCase):
         for rq_status, expected in cases.items():
             job = self._mock_job(rq_status)
             with patch(
-                "command_runner.queue.rq_backend.Job.fetch", return_value=job,
+                "admin_cmd_runner.queue.rq_backend.Job.fetch", return_value=job,
             ):
                 self.assertEqual(backend.get_status("job-1"), expected)
 
@@ -217,7 +217,7 @@ class RqBackendTests(SimpleTestCase):
 
         backend = RqBackend()
         with patch(
-            "command_runner.queue.rq_backend.Job.fetch",
+            "admin_cmd_runner.queue.rq_backend.Job.fetch",
             side_effect=NoSuchJobError,
         ):
             self.assertEqual(backend.get_status("job-1"), "not_found")

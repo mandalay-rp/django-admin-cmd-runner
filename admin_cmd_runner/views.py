@@ -1,8 +1,8 @@
 """HTTP-вьюхи: страница монитора, запуск, остановка, статус.
 
 Все эндпоинты закрыты ``@staff_member_required``. Состояние запуска
-хранится в общем кэше (см. :mod:`command_runner.store`), а исполнение
-делегируется бэкенду очереди (:mod:`command_runner.queue`).
+хранится в общем кэше (см. :mod:`admin_cmd_runner.store`), а исполнение
+делегируется бэкенду очереди (:mod:`admin_cmd_runner.queue`).
 """
 
 import logging
@@ -35,20 +35,20 @@ def monitor_page(
     """Страница монитора запусков.
 
     На корневом URL (``run_id is None``) показывает форму и не запускает
-    поллинг; при ``/command-runner/<run_id>/`` — восстанавливает состояние
+    поллинг; при ``/admin-cmd-runner/<run_id>/`` — восстанавливает состояние
     конкретного запуска и включает поллинг на клиенте.
     """
     ctx: dict[str, Any] = {
         "commands": get_available_commands(),
         "current_run_id": run_id or None,
         "urls": {
-            "start": reverse("command_runner:start"),
-            "stop": reverse("command_runner:stop", args=["__RUNID__"]),
-            "status": reverse("command_runner:status", args=["__RUNID__"]),
-            "monitor": reverse("command_runner:monitor", args=["__RUNID__"]),
+            "start": reverse("admin_cmd_runner:start"),
+            "stop": reverse("admin_cmd_runner:stop", args=["__RUNID__"]),
+            "status": reverse("admin_cmd_runner:status", args=["__RUNID__"]),
+            "monitor": reverse("admin_cmd_runner:monitor", args=["__RUNID__"]),
         },
     }
-    return render(request, "command_runner/monitor.html", ctx)
+    return render(request, "admin_cmd_runner/monitor.html", ctx)
 
 
 @staff_member_required

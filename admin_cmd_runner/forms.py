@@ -20,7 +20,7 @@ from .registry import get_available_commands
 
 
 class StartCommandForm(forms.Form):
-    """Форма для POST ``/command-runner/start/``."""
+    """Форма для POST ``/admin-cmd-runner/start/``."""
 
     command = forms.CharField(
         max_length=200,

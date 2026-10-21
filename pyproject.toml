@@ -3,8 +3,8 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "django-command-runner"
-version = "0.1.0"
+name = "django-admin-cmd-runner"
+version = "0.2.0"
 description = "Run Django management commands from admin with real-time monitoring and stop"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -77,16 +77,16 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/mandalay-rp/django-command-runner"
-Repository = "https://github.com/mandalay-rp/django-command-runner"
-Issues = "https://github.com/mandalay-rp/django-command-runner/issues"
-Changelog = "https://github.com/mandalay-rp/django-command-runner/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/mandalay-rp/django-admin-cmd-runner"
+Repository = "https://github.com/mandalay-rp/django-admin-cmd-runner"
+Issues = "https://github.com/mandalay-rp/django-admin-cmd-runner/issues"
+Changelog = "https://github.com/mandalay-rp/django-admin-cmd-runner/blob/main/CHANGELOG.md"
 
 [tool.setuptools]
 include-package-data = true
 
 [tool.setuptools.packages.find]
-include = ["command_runner*"]
+include = ["admin_cmd_runner*"]
 
 # ---------- ruff ----------
 [tool.ruff]
@@ -98,14 +98,14 @@ select = ["E", "F", "W", "I", "B", "UP", "C4", "SIM"]
 ignore = ["B008"]
 
 [tool.ruff.lint.per-file-ignores]
-"command_runner/tests/*" = ["B", "C4"]
+"admin_cmd_runner/tests/*" = ["B", "C4"]
 
 # ---------- mypy ----------
 [tool.mypy]
 python_version = "3.10"
 plugins = ["mypy_django_plugin.main"]
 ignore_missing_imports = true
-files = ["command_runner"]
+files = ["admin_cmd_runner"]
 
 [tool.django-stubs]
 django_settings_module = "tests.settings"
@@ -115,10 +115,10 @@ django_settings_module = "tests.settings"
 DJANGO_SETTINGS_MODULE = "tests.settings"
 pythonpath = ["."]
 python_files = ["test_*.py"]
-testpaths = ["command_runner/tests"]
-addopts = "--cov=command_runner --cov-report=term-missing --cov-fail-under=70"
+testpaths = ["admin_cmd_runner/tests"]
+addopts = "--cov=admin_cmd_runner --cov-report=term-missing --cov-fail-under=70"
 
 # ---------- coverage ----------
 [tool.coverage.run]
-source = ["command_runner"]
+source = ["admin_cmd_runner"]
 omit = ["*/tests/*"]

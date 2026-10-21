@@ -1,7 +1,7 @@
 """Минимальный Django-конфиг для запуска unit-тестов пакета.
 
 Используется только в CI/pytest. Реальные проекты подключают
-``command_runner`` в свой ``settings.py``.
+``admin_cmd_runner`` в свой ``settings.py``.
 """
 
 SECRET_KEY = "test-secret-key-not-for-production"
@@ -15,7 +15,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "command_runner",
+    "admin_cmd_runner",
 ]
 
 MIDDLEWARE = [
@@ -60,7 +60,7 @@ ROOT_URLCONF = "tests.urls"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# --- command_runner ---
+# --- admin_cmd_runner ---
 COMMAND_RUNNER_QUEUE = "rq"
 COMMAND_RUNNER_RQ_REDIS_URL = "redis://localhost:6379/2"
 COMMAND_RUNNER_RQ_QUEUE = "default"
