@@ -1,4 +1,4 @@
-"""Общие хелперы и базовый класс для тестов ``command_runner``."""
+"""Общие хелперы и базовый класс для тестов ``admin_cmd_runner``."""
 
 from unittest.mock import MagicMock
 

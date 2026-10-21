@@ -1,14 +1,14 @@
-"""Тесты модуля :mod:`command_runner.jobs`."""
+"""Тесты модуля :mod:`admin_cmd_runner.jobs`."""
 
 from unittest.mock import patch
 
-from command_runner import store
-from command_runner.jobs import _coerce_kwargs, execute_command
+from admin_cmd_runner import store
+from admin_cmd_runner.jobs import _coerce_kwargs, execute_command
 
 from .base import CacheTestCase
 
 # Путь до time.sleep в демо-команде — чтобы не ждать в тестах.
-_DEMO_SLEEP = "command_runner.management.commands.demo_long_command.time.sleep"
+_DEMO_SLEEP = "admin_cmd_runner.management.commands.demo_long_command.time.sleep"
 
 
 class CoerceKwargsTests(CacheTestCase):

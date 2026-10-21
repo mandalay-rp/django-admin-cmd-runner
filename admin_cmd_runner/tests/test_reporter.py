@@ -1,11 +1,11 @@
-"""Тесты модуля :mod:`command_runner.reporter`."""
+"""Тесты модуля :mod:`admin_cmd_runner.reporter`."""
 
 import io
 import sys
 from unittest.mock import patch
 
-from command_runner import store
-from command_runner.reporter import (
+from admin_cmd_runner import store
+from admin_cmd_runner.reporter import (
     CommandStopRequested,
     NullReporter,
     Reporter,

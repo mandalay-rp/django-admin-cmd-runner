@@ -1,4 +1,4 @@
-"""Тесты модуля :mod:`command_runner.views`."""
+"""Тесты модуля :mod:`admin_cmd_runner.views`."""
 
 import json
 from datetime import datetime, timedelta, timezone
@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 from django.test import RequestFactory
 
-from command_runner import store, views
+from admin_cmd_runner import store, views
 
 from .base import CacheTestCase, make_staff_user
 
@@ -21,10 +21,10 @@ class MonitorPageTests(CacheTestCase):
 
     def test_root_no_run_id(self) -> None:
         """Без ``run_id`` контекст содержит ``current_run_id=None``."""
-        request = self.factory.get("/command-runner/")
+        request = self.factory.get("/admin-cmd-runner/")
         request.user = make_staff_user()
 
-        with patch("command_runner.views.render") as mock_render:
+        with patch("admin_cmd_runner.views.render") as mock_render:
             mock_render.return_value = MagicMock(status_code=200)
             views.monitor_page(request)
 
@@ -35,10 +35,10 @@ class MonitorPageTests(CacheTestCase):
 
     def test_with_run_id(self) -> None:
         """С ``run_id`` контекст содержит его в ``current_run_id``."""
-        request = self.factory.get("/command-runner/run-1/")
+        request = self.factory.get("/admin-cmd-runner/run-1/")
         request.user = make_staff_user()
 
-        with patch("command_runner.views.render") as mock_render:
+        with patch("admin_cmd_runner.views.render") as mock_render:
             mock_render.return_value = MagicMock(status_code=200)
             views.monitor_page(request, run_id="run-1")
 
@@ -60,7 +60,7 @@ class StartRunTests(CacheTestCase):
         request.user = make_staff_user()
 
         with patch(
-            "command_runner.views.get_available_commands",
+            "admin_cmd_runner.views.get_available_commands",
             return_value=[],
         ):
             response = views.start_run(request)
@@ -82,7 +82,7 @@ class StartRunTests(CacheTestCase):
         request.user = make_staff_user()
 
         with patch(
-            "command_runner.views.get_available_commands",
+            "admin_cmd_runner.views.get_available_commands",
             return_value=[{"name": "demo_long_command"}],
         ):
             response = views.start_run(request)
@@ -100,10 +100,10 @@ class StartRunTests(CacheTestCase):
         request.user = make_staff_user()
 
         with patch(
-            "command_runner.views.get_available_commands",
+            "admin_cmd_runner.views.get_available_commands",
             return_value=[{"name": "demo_long_command"}],
         ), patch(
-            "command_runner.views.get_backend",
+            "admin_cmd_runner.views.get_backend",
         ) as mock_get_backend:
             mock_backend = MagicMock()
             mock_backend.enqueue.return_value = "task-123"
@@ -150,7 +150,7 @@ class StopRunTests(CacheTestCase):
         store.create_state(run_id, "demo", [])
         store.update_state(run_id, status="success")
 
-        with patch("command_runner.views.get_backend") as mock_gb:
+        with patch("admin_cmd_runner.views.get_backend") as mock_gb:
             response = views.stop_run(self._request(run_id), run_id=run_id)
 
         mock_gb.assert_not_called()
@@ -177,7 +177,7 @@ class StopRunTests(CacheTestCase):
         store.set_task_id(run_id, "task-1")
         store.update_state(run_id, status="queued")
 
-        with patch("command_runner.views.get_backend") as mock_gb:
+        with patch("admin_cmd_runner.views.get_backend") as mock_gb:
             mock_backend = MagicMock()
             mock_backend.revoke.return_value = "cancelled"
             mock_gb.return_value = mock_backend
@@ -195,7 +195,7 @@ class StopRunTests(CacheTestCase):
         store.set_task_id(run_id, "task-1")
         store.update_state(run_id, status="running")
 
-        with patch("command_runner.views.get_backend") as mock_gb:
+        with patch("admin_cmd_runner.views.get_backend") as mock_gb:
             mock_backend = MagicMock()
             mock_backend.revoke.return_value = "stopping"
             mock_gb.return_value = mock_backend
@@ -278,7 +278,7 @@ class FinalizeIfNeededTests(CacheTestCase):
             stopping_at=store.now_iso(),
         )
 
-        with patch("command_runner.views.get_backend") as mock_gb:
+        with patch("admin_cmd_runner.views.get_backend") as mock_gb:
             mock_backend = MagicMock()
             mock_backend.get_status.return_value = "stopped"
             mock_gb.return_value = mock_backend
@@ -299,7 +299,7 @@ class FinalizeIfNeededTests(CacheTestCase):
             stopping_at=store.now_iso(),
         )
 
-        with patch("command_runner.views.get_backend") as mock_gb:
+        with patch("admin_cmd_runner.views.get_backend") as mock_gb:
             mock_backend = MagicMock()
             mock_backend.get_status.return_value = "error"
             mock_gb.return_value = mock_backend

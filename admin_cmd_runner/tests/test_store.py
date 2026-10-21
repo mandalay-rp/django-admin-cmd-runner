@@ -1,6 +1,6 @@
-"""Тесты модуля :mod:`command_runner.store`."""
+"""Тесты модуля :mod:`admin_cmd_runner.store`."""
 
-from command_runner import store
+from admin_cmd_runner import store
 
 from .base import CacheTestCase
 

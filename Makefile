@@ -15,17 +15,17 @@ install:
 	pip install -e ".[dev]"
 
 test:
-	pytest command_runner/tests
+	pytest admin_cmd_runner/tests
 
 lint:
-	ruff check command_runner tests
+	ruff check admin_cmd_runner tests
 
 typecheck:
-	mypy command_runner
+	mypy admin_cmd_runner
 
 format:
-	ruff check --fix command_runner tests
-	ruff format command_runner tests
+	ruff check --fix admin_cmd_runner tests
+	ruff format admin_cmd_runner tests
 
 build: clean
 	python -m build

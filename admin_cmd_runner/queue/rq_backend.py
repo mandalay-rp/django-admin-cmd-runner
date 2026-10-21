@@ -35,7 +35,7 @@ def _conn() -> Redis:
 
 
 def _queue(conn: Redis | None = None) -> tuple[Queue, Redis]:
-    """Возвращает ``(Queue, redis_conn)`` для очереди command_runner."""
+    """Возвращает ``(Queue, redis_conn)`` для очереди admin_cmd_runner."""
     conn = conn or _conn()
     name: str = getattr(settings, "COMMAND_RUNNER_RQ_QUEUE", "default")
     return Queue(name, connection=conn), conn

@@ -1,8 +1,8 @@
-"""Тесты модуля :mod:`command_runner.forms`."""
+"""Тесты модуля :mod:`admin_cmd_runner.forms`."""
 
 from django.test import SimpleTestCase, override_settings
 
-from command_runner.forms import StartCommandForm
+from admin_cmd_runner.forms import StartCommandForm
 
 
 class CleanCommandTests(SimpleTestCase):

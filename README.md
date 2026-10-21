@@ -42,13 +42,13 @@ pip install celery
 
 ### 2. Скопируйте приложение
 
-Скопируйте пакет `command_runner/` в ваш проект (например, в
-`your_project_name/apps/command_runner/`) и добавьте его в `INSTALLED_APPS`:
+Скопируйте пакет `admin_cmd_runner/` в ваш проект (например, в
+`your_project_name/apps/admin_cmd_runner/`) и добавьте его в `INSTALLED_APPS`:
 
 ```python
 INSTALLED_APPS = [
     # ...
-    "command_runner",
+    "admin_cmd_runner",
 ]
 ```
 
@@ -98,7 +98,7 @@ COMMAND_RUNNER_COMMANDS = [
 from django.urls import include, path
 
 urlpatterns += [
-    path("command-runner/", include("command_runner.urls")),
+    path("admin-cmd-runner/", include("admin_cmd_runner.urls")),
 ]
 ```
 
@@ -128,7 +128,7 @@ python manage.py runserver
 
 ## Использование
 
-1. Откройте `/command-runner/` под staff-пользователем.
+1. Откройте `/admin-cmd-runner/` под staff-пользователем.
 2. Выберите команду из выпадающего списка.
 3. Введите аргументы (необязательно): позиционные `arg1 arg2`; именованные
    `--steps 5 --name "Hello World"`; флаги `--verbose` (без значения → `True`);
@@ -147,32 +147,32 @@ python manage.py runserver
 
 ### Запуск в проекте
 
-Если `command_runner` подключён в `INSTALLED_APPS` вашего Django-проекта:
+Если `admin_cmd_runner` подключён в `INSTALLED_APPS` вашего Django-проекта:
 
 ```bash
 # все тесты приложения (по app label)
-python manage.py test command_runner
+python manage.py test admin_cmd_runner
 
 # только пакет тестов
-python manage.py test command_runner.tests
+python manage.py test admin_cmd_runner.tests
 
 # конкретный модуль
-python manage.py test command_runner.tests.test_store
+python manage.py test admin_cmd_runner.tests.test_store
 
 # конкретный тест-класс
-python manage.py test command_runner.tests.test_store.LockTests
+python manage.py test admin_cmd_runner.tests.test_store.LockTests
 
 # конкретный метод
-python manage.py test command_runner.tests.test_store.LockTests.test_acquire_and_get
+python manage.py test admin_cmd_runner.tests.test_store.LockTests.test_acquire_and_get
 ```
 
-Если приложение подключено по полному пути (`your_project_name.apps.command_runner`),
+Если приложение подключено по полному пути (`your_project_name.apps.admin_cmd_runner`),
 используйте label или полный путь к пакету тестов:
 
 ```bash
-python manage.py test apps_command_runner
+python manage.py test apps_admin_cmd_runner
 # или
-python manage.py test your_project_name.apps.command_runner.tests
+python manage.py test your_project_name.apps.admin_cmd_runner.tests
 ```
 
 ### Запуск при разработке пакета (uv)
@@ -188,18 +188,18 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 uv sync --extra dev
 
 # тесты с покрытием (конфиг pytest — в pyproject.toml)
-uv run pytest command_runner/tests
+uv run pytest admin_cmd_runner/tests
 
 # только линтер
-uv run ruff check command_runner tests
+uv run ruff check admin_cmd_runner tests
 
 # только проверка типов
-uv run mypy command_runner
+uv run mypy admin_cmd_runner
 
 # всё сразу (lint + typecheck + test)
-uv run ruff check command_runner tests \
-  && uv run mypy command_runner \
-  && uv run pytest command_runner/tests
+uv run ruff check admin_cmd_runner tests \
+  && uv run mypy admin_cmd_runner \
+  && uv run pytest admin_cmd_runner/tests
 ```
 
 Управление зависимостями:
@@ -224,20 +224,20 @@ uv venv --python 3.12
 Порог покрытия задан в `pyproject.toml` (`--cov-fail-under=70`). HTML-отчёт:
 
 ```bash
-uv run pytest command_runner/tests --cov-report=html
+uv run pytest admin_cmd_runner/tests --cov-report=html
 open htmlcov/index.html
 ```
 
 ### Запуск в Docker
 
 ```bash
-docker compose exec django python manage.py test command_runner
+docker compose exec django python manage.py test admin_cmd_runner
 ```
 
 ## Архитектура
 
 ```
-command_runner/
+admin_cmd_runner/
 ├── __init__.py             — описание приложения
 ├── apps.py                 — AppConfig
 ├── admin.py                — без моделей, только подсказка по меню
@@ -258,7 +258,7 @@ command_runner/
 │       ├── _base.py        — ReporterCommand с доступом к reporter
 │       └── demo_long_command.py — демо-команда с прогрессом и stop
 └── templates/
-    └── command_runner/
+    └── admin_cmd_runner/
         └── monitor.html    — UI с polling
 ```
 
@@ -298,7 +298,7 @@ command_runner/
 `self.reporter` (прогресс, лог, проверка остановки):
 
 ```python
-from command_runner.management.commands._base import ReporterCommand
+from admin_cmd_runner.management.commands._base import ReporterCommand
 
 
 class Command(ReporterCommand):

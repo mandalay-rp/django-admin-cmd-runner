@@ -3,9 +3,9 @@ include LICENSE
 include CHANGELOG.md
 include AUTHORS.md
 
-include command_runner/py.typed
-recursive-include command_runner/templates *.html
-recursive-include command_runner/tests *.py
+include admin_cmd_runner/py.typed
+recursive-include admin_cmd_runner/templates *.html
+recursive-include admin_cmd_runner/tests *.py
 
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]

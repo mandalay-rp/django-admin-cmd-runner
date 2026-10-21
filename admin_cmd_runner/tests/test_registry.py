@@ -1,8 +1,8 @@
-"""Тесты модуля :mod:`command_runner.registry`."""
+"""Тесты модуля :mod:`admin_cmd_runner.registry`."""
 
 from django.test import SimpleTestCase, override_settings
 
-from command_runner.registry import get_available_commands
+from admin_cmd_runner.registry import get_available_commands
 
 
 class GetAvailableCommandsTests(SimpleTestCase):

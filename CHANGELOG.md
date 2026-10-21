@@ -11,7 +11,7 @@
 ### Added
 
 - Первый публичный релиз.
-- Запуск management-команд через staff-страницу `/command-runner/`.
+- Запуск management-команд через staff-страницу `/admin-cmd-runner/`.
 - Парсер аргументов в стиле shell (`shlex.split`) с автоматическим
   приведением типов kwargs по `add_argument(type=...)`.
 - Real-time мониторинг: статус, прогресс-бар, лог (polling раз в секунду).

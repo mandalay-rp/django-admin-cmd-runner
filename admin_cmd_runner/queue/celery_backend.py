@@ -11,14 +11,14 @@ from ..jobs import execute_command
 from .base import BaseQueueBackend
 
 
-@shared_task(name="command_runner.execute_command")
+@shared_task(name="admin_cmd_runner.execute_command")
 def celery_execute_command(
     run_id: str,
     command_name: str,
     args: Sequence[str] | None = None,
     kwargs: dict[str, Any] | None = None,
 ) -> dict[str, str]:
-    """Celery-обёртка над :func:`command_runner.jobs.execute_command`."""
+    """Celery-обёртка над :func:`admin_cmd_runner.jobs.execute_command`."""
     return execute_command(run_id, command_name, args, kwargs)
 
 
