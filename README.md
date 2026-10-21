@@ -175,27 +175,48 @@ python manage.py test apps_command_runner
 python manage.py test your_project_name.apps.command_runner.tests
 ```
 
-### Запуск при разработке пакета
+### Запуск при разработке пакета (uv)
 
 Из корня репозитория (там, где `pyproject.toml`):
 
 ```bash
-# установить с dev-зависимостями
-pip install -e ".[dev]"
+# установить uv (один раз)
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# тесты с покрытием (pytest, конфиг в pyproject.toml)
-make test
-# или
-pytest command_runner/tests
+# создать виртуальное окружение и установить пакет
+# в editable-режиме со всеми dev-зависимостями
+uv sync --extra dev
+
+# тесты с покрытием (конфиг pytest — в pyproject.toml)
+uv run pytest command_runner/tests
 
 # только линтер
-make lint
+uv run ruff check command_runner tests
 
 # только проверка типов
-make typecheck
+uv run mypy command_runner
 
 # всё сразу (lint + typecheck + test)
-make all
+uv run ruff check command_runner tests \
+  && uv run mypy command_runner \
+  && uv run pytest command_runner/tests
+```
+
+Управление зависимостями:
+
+```bash
+# добавить dev-зависимость
+uv add --dev pytest-xdist
+
+# обновить lock-файл без установки
+uv lock
+
+# синхронизировать окружение с lock-файлом
+uv sync --extra dev
+
+# конкретная версия Python
+uv python install 3.12
+uv venv --python 3.12
 ```
 
 ### Покрытие
@@ -203,7 +224,7 @@ make all
 Порог покрытия задан в `pyproject.toml` (`--cov-fail-under=70`). HTML-отчёт:
 
 ```bash
-pytest command_runner/tests --cov-report=html
+uv run pytest command_runner/tests --cov-report=html
 open htmlcov/index.html
 ```
 
