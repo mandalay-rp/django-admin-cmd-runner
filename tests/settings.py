@@ -61,10 +61,10 @@ ROOT_URLCONF = "tests.urls"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # --- admin_cmd_runner ---
-COMMAND_RUNNER_QUEUE = "rq"
-COMMAND_RUNNER_RQ_REDIS_URL = "redis://localhost:6379/2"
-COMMAND_RUNNER_RQ_QUEUE = "default"
-COMMAND_RUNNER_COMMANDS = [
+ADMIN_CMD_RUNNER_QUEUE = "rq"
+ADMIN_CMD_RUNNER_RQ_REDIS_URL = "redis://localhost:6379/2"
+ADMIN_CMD_RUNNER_RQ_QUEUE = "default"
+ADMIN_CMD_RUNNER_COMMANDS = [
     {
         "name": "demo_long_command",
         "label": "Demo long command",

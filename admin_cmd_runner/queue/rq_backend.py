@@ -30,14 +30,14 @@ logger = logging.getLogger(__name__)
 
 
 def _conn() -> Redis:
-    """Создаёт Redis-соединение по ``COMMAND_RUNNER_RQ_REDIS_URL``."""
-    return redis.from_url(settings.COMMAND_RUNNER_RQ_REDIS_URL)
+    """Создаёт Redis-соединение по ``ADMIN_CMD_RUNNER_RQ_REDIS_URL``."""
+    return redis.from_url(settings.ADMIN_CMD_RUNNER_RQ_REDIS_URL)
 
 
 def _queue(conn: Redis | None = None) -> tuple[Queue, Redis]:
     """Возвращает ``(Queue, redis_conn)`` для очереди admin_cmd_runner."""
     conn = conn or _conn()
-    name: str = getattr(settings, "COMMAND_RUNNER_RQ_QUEUE", "default")
+    name: str = getattr(settings, "ADMIN_CMD_RUNNER_RQ_QUEUE", "default")
     return Queue(name, connection=conn), conn
 
 
@@ -108,7 +108,7 @@ class RqBackend(BaseQueueBackend):
         ``send_stop_job_command`` с fallback'ом на ``send_kill_horse_command``.
         """
         conn = _conn()
-        queue_name: str = getattr(settings, "COMMAND_RUNNER_RQ_QUEUE", "default")
+        queue_name: str = getattr(settings, "ADMIN_CMD_RUNNER_RQ_QUEUE", "default")
 
         try:
             job: Job = Job.fetch(task_id, connection=conn)

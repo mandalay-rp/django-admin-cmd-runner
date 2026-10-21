@@ -91,6 +91,38 @@ class LogTests(CacheTestCase):
         self.assertEqual(lines[1]["msg"], "line 2")
         self.assertIn("t", lines[0])
 
+    def test_append_log_default_stream_is_stdout(self) -> None:
+        """Без параметра ``stream`` строка помечается как ``stdout``."""
+        store.create_state("run-1", "demo", [])
+        store.append_log("run-1", "hello")
+        lines = store.get_log("run-1")
+        self.assertEqual(lines[0]["stream"], store.STREAM_STDOUT)
+
+    def test_append_log_with_stderr(self) -> None:
+        """Явное указание ``stream="stderr"`` сохраняется в строке лога."""
+        store.create_state("run-1", "demo", [])
+        store.append_log("run-1", "oops", stream=store.STREAM_STDERR)
+        lines = store.get_log("run-1")
+        self.assertEqual(lines[0]["stream"], store.STREAM_STDERR)
+        self.assertEqual(lines[0]["msg"], "oops")
+
+    def test_append_log_mixed_streams(self) -> None:
+        """Строки с разными ``stream`` сохраняются по порядку и не смешиваются."""
+        store.create_state("run-1", "demo", [])
+        store.append_log("run-1", "out 1")
+        store.append_log("run-1", "err 1", stream=store.STREAM_STDERR)
+        store.append_log("run-1", "out 2")
+
+        lines = store.get_log("run-1")
+        self.assertEqual(
+            [(i["msg"], i["stream"]) for i in lines],
+            [
+                ("out 1", store.STREAM_STDOUT),
+                ("err 1", store.STREAM_STDERR),
+                ("out 2", store.STREAM_STDOUT),
+            ],
+        )
+
     def test_get_log_since(self) -> None:
         """``since`` сдвигает окно выдачи строк."""
         store.create_state("run-1", "demo", [])
@@ -104,8 +136,8 @@ class LogTests(CacheTestCase):
     def test_log_trimming(self) -> None:
         """При превышении лимита старые строки обрезаются."""
         store.create_state("run-1", "demo", [])
-        for i in range(store.MAX_LOG_LINES + 10):
-            store.append_log("run-1", f"l{i}")
+        for idx in range(store.MAX_LOG_LINES + 10):
+            store.append_log("run-1", f"l{idx}")
 
         lines = store.get_log("run-1")
         self.assertEqual(len(lines), store.MAX_LOG_LINES)
@@ -151,3 +183,8 @@ class HelpersTests(CacheTestCase):
         ts = store.now_iso()
         self.assertIsInstance(ts, str)
         self.assertIn("T", ts)
+
+    def test_stream_constants(self) -> None:
+        """Константы потоков — ``"stdout"`` и ``"stderr"``."""
+        self.assertEqual(store.STREAM_STDOUT, "stdout")
+        self.assertEqual(store.STREAM_STDERR, "stderr")

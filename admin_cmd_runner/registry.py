@@ -1,6 +1,6 @@
 """Реестр management-команд, доступных для запуска из UI.
 
-Источник данных — ``settings.COMMAND_RUNNER_COMMANDS``: список строк
+Источник данных — ``settings.ADMIN_CMD_RUNNER_COMMANDS``: список строк
 (имён команд) или словарей ``{"name": ..., "label": ..., "args_help": ...}``.
 """
 
@@ -16,9 +16,9 @@ def get_available_commands() -> list[CommandSpec]:
     """Возвращает список доступных команд в нормализованном виде.
 
     Каждый элемент — словарь с ключами ``name``, ``label``, ``args_help``.
-    Порядок соответствует ``settings.COMMAND_RUNNER_COMMANDS``.
+    Порядок соответствует ``settings.ADMIN_CMD_RUNNER_COMMANDS``.
     """
-    raw: list[CommandEntry] = getattr(settings, "COMMAND_RUNNER_COMMANDS", [])
+    raw: list[CommandEntry] = getattr(settings, "ADMIN_CMD_RUNNER_COMMANDS", [])
     result: list[CommandSpec] = []
     for item in raw:
         if isinstance(item, str):

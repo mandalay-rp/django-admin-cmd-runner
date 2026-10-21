@@ -4,6 +4,9 @@
     * file-like объекта (``write``/``flush``/``isatty``) — для stdout/stderr;
     * API для управления прогрессом и проверки флага остановки.
 
+Каждый экземпляр пишет в свой поток (``stdout`` или ``stderr``), который
+передаётся в ``store.append_log`` для цветового выделения на фронте.
+
 Текущий ``run_id`` хранится в thread-local, чтобы management-команда
 могла обратиться к репортёру через ``get_reporter()`` без проброса
 дополнительных параметров.
@@ -46,22 +49,29 @@ def get_current_run_id() -> str | None:
 
 
 class Reporter:
-    """Репортёр прогресса и логов, привязанный к конкретному ``run_id``.
+    """Репортёр прогресса и логов, привязанный к ``run_id`` и потоку.
 
     Используется как ``stdout``/``stderr`` в ``call_command`` и как объект
     с методами ``progress``/``check_stop`` для использования внутри команд.
+    Поле ``stream`` (``"stdout"`` / ``"stderr"``) сохраняется в каждой
+    строке лога и используется фронтом для цветового выделения.
     """
 
-    def __init__(self, run_id: str) -> None:
-        """Создаёт репортёр для запуска ``run_id``."""
+    def __init__(
+        self,
+        run_id: str,
+        stream: str = store.STREAM_STDOUT,
+    ) -> None:
+        """Создаёт репортёр для запуска ``run_id`` и указанного потока."""
         self.run_id: str = run_id
+        self.stream: str = stream
 
     def write(self, msg: Any = "") -> None:
         """Записывает строку в лог запуска (ANSI-коды удаляются)."""
         text = _ANSI_RE.sub("", str(msg)).rstrip("\n")
         if not text:
             return
-        store.append_log(self.run_id, text)
+        store.append_log(self.run_id, text, stream=self.stream)
 
     def flush(self) -> None:
         """Заглушка для совместимости с file-like интерфейсом."""
@@ -72,7 +82,7 @@ class Reporter:
         return False
 
     def log(self, msg: Any) -> None:
-        """Псевдоним ``write`` для использования внутри команд."""
+        """Псевдоним ``write``; пишет в поток этого репортёра."""
         self.write(msg)
 
     def progress(self, percent: int, message: str = "") -> None:
@@ -90,6 +100,10 @@ class NullReporter:
 
     Пишет в стандартный stdout процесса и игнорирует обновления прогресса.
     """
+
+    def __init__(self, stream: str = store.STREAM_STDOUT) -> None:
+        """Принимает ``stream`` для совместимости с ``Reporter`` (игнорируется)."""
+        self.stream: str = stream
 
     def write(self, msg: Any = "") -> None:
         """Пишет строку в ``sys.stdout`` процесса."""
@@ -116,10 +130,12 @@ class NullReporter:
 
 
 def get_reporter() -> Reporter | NullReporter:
-    """Возвращает репортёр для текущего потока.
+    """Возвращает ``stdout``-репортёр для текущего потока.
 
     Если ``run_id`` в потоке не установлен (команда запускается вне воркера) —
-    возвращает :class:`NullReporter`.
+    возвращает :class:`NullReporter`. Для записи в ``stderr`` используйте
+    ``self.stderr`` внутри команды (Django передаёт в него отдельный
+    экземпляр :class:`Reporter` со ``stream="stderr"``).
     """
     run_id = get_current_run_id()
-    return Reporter(run_id) if run_id else NullReporter()
+    return Reporter(run_id, stream=store.STREAM_STDOUT) if run_id else NullReporter()

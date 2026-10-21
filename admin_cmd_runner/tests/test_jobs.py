@@ -4,6 +4,9 @@ from unittest.mock import patch
 
 from admin_cmd_runner import store
 from admin_cmd_runner.jobs import _coerce_kwargs, execute_command
+from admin_cmd_runner.management.commands.demo_long_command import (
+    Command as DemoCommand,
+)
 
 from .base import CacheTestCase
 
@@ -74,6 +77,51 @@ class ExecuteCommandTests(CacheTestCase):
         messages = [i["msg"] for i in store.get_log(run_id)]
         self.assertTrue(any("Шаг 1" in m for m in messages))
         self.assertTrue(any("Готово" in m for m in messages))
+
+    def test_stdout_lines_marked_as_stdout(self) -> None:
+        """Строки, записанные в ``self.stdout``, попадают в лог как ``stdout``."""
+        run_id = "run-1"
+        store.create_state(run_id, "demo_long_command", [])
+
+        with patch(_DEMO_SLEEP):
+            execute_command(
+                run_id,
+                "demo_long_command",
+                args=[],
+                kwargs={"steps": "2"},
+            )
+
+        lines = store.get_log(run_id)
+        for line in lines:
+            self.assertEqual(line["stream"], store.STREAM_STDOUT)
+
+    def test_stderr_separated_from_stdout(self) -> None:
+        """Строки ``self.stderr`` помечаются как ``stderr``, не смешиваясь.
+
+        Патчим ``handle`` конкретного класса ``demo_long_command.Command``:
+        ``call_command`` инстанцирует именно его, и его ``handle`` важнее
+        ``BaseCommand.handle`` в MRO.
+        """
+        run_id = "run-1"
+        store.create_state(run_id, "demo_long_command", [])
+
+        def mixed_handle(self, *a, **kw):
+            self.stdout.write("out-1")
+            self.stderr.write("err-1")
+            self.stdout.write("out-2")
+
+        with patch.object(DemoCommand, "handle", mixed_handle):
+            execute_command(run_id, "demo_long_command")
+
+        lines = store.get_log(run_id)
+        self.assertEqual(
+            [(i["msg"], i["stream"]) for i in lines],
+            [
+                ("out-1", store.STREAM_STDOUT),
+                ("err-1", store.STREAM_STDERR),
+                ("out-2", store.STREAM_STDOUT),
+            ],
+        )
 
     def test_error(self) -> None:
         """Ошибка внутри команды переводит состояние в ``error`` с traceback."""

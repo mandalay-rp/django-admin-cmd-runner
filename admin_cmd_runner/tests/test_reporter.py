@@ -30,6 +30,35 @@ class ReporterTests(CacheTestCase):
         self.assertEqual(len(lines), 1)
         self.assertEqual(lines[0]["msg"], "hello")
 
+    def test_write_default_stream_stdout(self) -> None:
+        """По умолчанию ``Reporter`` пишет в ``stdout``."""
+        store.create_state("run-1", "demo", [])
+        Reporter("run-1").write("hello")
+        lines = store.get_log("run-1")
+        self.assertEqual(lines[0]["stream"], store.STREAM_STDOUT)
+
+    def test_write_stream_stderr(self) -> None:
+        """``Reporter(stream="stderr")`` помечает строки как ``stderr``."""
+        store.create_state("run-1", "demo", [])
+        Reporter("run-1", stream=store.STREAM_STDERR).write("oops")
+        lines = store.get_log("run-1")
+        self.assertEqual(lines[0]["stream"], store.STREAM_STDERR)
+        self.assertEqual(lines[0]["msg"], "oops")
+
+    def test_two_reporters_isolated_streams(self) -> None:
+        """Два репортёра на один ``run_id`` пишут в разные потоки."""
+        store.create_state("run-1", "demo", [])
+        out = Reporter("run-1", stream=store.STREAM_STDOUT)
+        err = Reporter("run-1", stream=store.STREAM_STDERR)
+        out.write("out")
+        err.write("err")
+
+        lines = store.get_log("run-1")
+        self.assertEqual(
+            [(i["msg"], i["stream"]) for i in lines],
+            [("out", store.STREAM_STDOUT), ("err", store.STREAM_STDERR)],
+        )
+
     def test_write_strips_ansi(self) -> None:
         """ANSI-последовательности из вывода удаляются."""
         store.create_state("run-1", "demo", [])
@@ -73,6 +102,13 @@ class ReporterTests(CacheTestCase):
         """``flush`` не падает."""
         Reporter("run-1").flush()
 
+    def test_stream_attribute(self) -> None:
+        """Атрибут ``stream`` сохраняется из конструктора."""
+        self.assertEqual(
+            Reporter("run-1", stream=store.STREAM_STDERR).stream,
+            store.STREAM_STDERR,
+        )
+
 
 class NullReporterTests(CacheTestCase):
     """Тесты :class:`NullReporter`."""
@@ -89,6 +125,14 @@ class NullReporterTests(CacheTestCase):
         r = NullReporter()
         r.progress(50, "x")
         r.check_stop()
+
+    def test_stream_attribute(self) -> None:
+        """Атрибут ``stream`` есть для совместимости с ``Reporter``."""
+        self.assertEqual(NullReporter().stream, store.STREAM_STDOUT)
+        self.assertEqual(
+            NullReporter(stream=store.STREAM_STDERR).stream,
+            store.STREAM_STDERR,
+        )
 
 
 class ThreadLocalTests(CacheTestCase):
@@ -111,8 +155,9 @@ class ThreadLocalTests(CacheTestCase):
         self.assertIsInstance(get_reporter(), NullReporter)
 
     def test_get_reporter_inside_run(self) -> None:
-        """С ``run_id`` возвращается ``Reporter``."""
+        """С ``run_id`` возвращается ``Reporter`` со ``stream="stdout"``."""
         set_current_run("run-1")
         r = get_reporter()
         self.assertIsInstance(r, Reporter)
         self.assertEqual(r.run_id, "run-1")
+        self.assertEqual(r.stream, store.STREAM_STDOUT)

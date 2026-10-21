@@ -56,16 +56,16 @@ INSTALLED_APPS = [
 
 ```python
 # Выбор бэкенда: "celery" или "rq"
-COMMAND_RUNNER_QUEUE = "rq"
+ADMIN_CMD_RUNNER_QUEUE = "rq"
 
 # Redis для RQ-очереди
-COMMAND_RUNNER_RQ_REDIS_URL = "redis://redis:6379/2"
-COMMAND_RUNNER_RQ_QUEUE = "default"
+ADMIN_CMD_RUNNER_RQ_REDIS_URL = "redis://redis:6379/2"
+ADMIN_CMD_RUNNER_RQ_QUEUE = "default"
 
 # Для django-rq worker: без этого блока воркер подключается к localhost:6379/0
 RQ_QUEUES = {
-    "default": {"URL": COMMAND_RUNNER_RQ_REDIS_URL},
-    "high":    {"URL": COMMAND_RUNNER_RQ_REDIS_URL},
+    "default": {"URL": ADMIN_CMD_RUNNER_RQ_REDIS_URL},
+    "high":    {"URL": ADMIN_CMD_RUNNER_RQ_REDIS_URL},
 }
 
 # Общий кэш для состояния (обязательно Redis или Memcached)
@@ -80,7 +80,7 @@ CACHES = {
 }
 
 # Белый список команд
-COMMAND_RUNNER_COMMANDS = [
+ADMIN_CMD_RUNNER_COMMANDS = [
     {
         "name": "demo_long_command",
         "label": "Демонстрационная долгая команда",
@@ -283,11 +283,11 @@ admin_cmd_runner/
 
 | Ключ                    | Назначение                                  | TTL    |
 |-------------------------|---------------------------------------------|--------|
-| `cmdrun:lock`           | id активного запуска (один на проект)       | 24 ч   |
-| `cmdrun:state:<run_id>` | состояние запуска (status, progress, error) | 24 ч   |
-| `cmdrun:log:<run_id>`   | лог (список строк, ограничен 2000 записей)  | 24 ч   |
-| `cmdrun:stop:<run_id>`  | флаг запроса остановки                      | 6 ч    |
-| `cmdrun:task:<run_id>`  | task_id/job_id в бэкенде                    | 24 ч   |
+| `admin_cmd_runner:lock`           | id активного запуска (один на проект)       | 24 ч   |
+| `admin_cmd_runner:state:<run_id>` | состояние запуска (status, progress, error) | 24 ч   |
+| `admin_cmd_runner:log:<run_id>`   | лог (список строк, ограничен 2000 записей)  | 24 ч   |
+| `admin_cmd_runner:stop:<run_id>`  | флаг запроса остановки                      | 6 ч    |
+| `admin_cmd_runner:task:<run_id>`  | task_id/job_id в бэкенде                    | 24 ч   |
 
 **Важно:** кэш должен быть общим для всех процессов (web и worker),
 поэтому `LocMemCache` не подходит — нужен Redis или Memcached.

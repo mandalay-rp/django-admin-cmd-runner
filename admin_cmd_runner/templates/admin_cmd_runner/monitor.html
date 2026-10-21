@@ -15,6 +15,9 @@ select, input, button { padding: 6px 10px; font-size: 14px; }
     #log { background: #111; color: #ddd; padding: 12px; height: 420px; overflow: auto;
         font-family: ui-monospace, monospace; font-size: 12px; white-space: pre-wrap;
         border-radius: 6px; }
+#log > div { padding: 1px 0; }
+#log > div.log-stdout { color: #dddddd; }
+#log > div.log-stderr { color: #ff8a80; }
 .status { font-weight: 600; }
 .status-success { color: #2e7d32; }
 .status-error   { color: #c62828; }
@@ -38,7 +41,7 @@ select, input, button { padding: 6px 10px; font-size: 14px; }
                 {% for c in commands %}
                 <option value="{{ c.name }}" data-help="{{ c.args_help|default:'' }}">{{ c.label }}</option>
                 {% empty %}
-                <option value="">(нет доступных команд — задайте COMMAND_RUNNER_COMMANDS)</option>
+                <option value="">(нет доступных команд — задайте ADMIN_CMD_RUNNER_COMMANDS)</option>
                 {% endfor %}
             </select>
             <input id="args-input" type="text" placeholder="Аргументы (например: --steps 5)">
@@ -94,6 +97,7 @@ select, input, button { padding: 6px 10px; font-size: 14px; }
                 function appendLogs(lines) {
                     for (const line of lines) {
                         const div = document.createElement("div");
+                        div.className = line.stream === "stderr" ? "log-stderr" : "log-stdout";
                         div.textContent = line.msg;
                         elLog.appendChild(div);
                     }

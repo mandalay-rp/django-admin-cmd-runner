@@ -18,7 +18,7 @@
 - Остановка выполнения: `job.cancel`/`revoke` для queued-задач,
   `send_stop_job_command` + `kill_horse` для started (RQ),
   `revoke(terminate=True)` для Celery.
-- Поддержка бэкендов **RQ** и **Celery** (`COMMAND_RUNNER_QUEUE`).
+- Поддержка бэкендов **RQ** и **Celery** (`ADMIN_CMD_RUNNER_QUEUE`).
 - Базовый класс `ReporterCommand` для команд с прогрессом и stop.
 - Демо-команда `demo_long_command`.
 - Unit-тесты (покрытие ≥70%).
@@ -27,3 +27,10 @@
 
 ### Fixed
 - Поправлен путь к шаблону страницы запуска приложения (monitory.html).
+
+## [0.3.0] - 2026-10-21
+
+### Fixed
+- Добавлено определение при чтении лога сообщения - из stdout оно (шаг пройден успешно) или из stderr(ошибки при выполнении шага).
+- Добавлены тесты.
+- Правки найденных багов.

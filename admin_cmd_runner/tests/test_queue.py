@@ -33,20 +33,20 @@ class GetBackendTests(SimpleTestCase):
     """Тесты фабрики :func:`admin_cmd_runner.queue.get_backend`."""
 
     @unittest.skipUnless(HAS_CELERY, "celery not installed")
-    @override_settings(COMMAND_RUNNER_QUEUE="celery")
+    @override_settings(ADMIN_CMD_RUNNER_QUEUE="celery")
     def test_celery(self) -> None:
         """Настройка ``celery`` → ``CeleryBackend``."""
         from admin_cmd_runner.queue import get_backend
         self.assertIsInstance(get_backend(), CeleryBackend)
 
     @unittest.skipUnless(HAS_RQ, "rq not installed")
-    @override_settings(COMMAND_RUNNER_QUEUE="rq")
+    @override_settings(ADMIN_CMD_RUNNER_QUEUE="rq")
     def test_rq(self) -> None:
         """Настройка ``rq`` → ``RqBackend``."""
         from admin_cmd_runner.queue import get_backend
         self.assertIsInstance(get_backend(), RqBackend)
 
-    @override_settings(COMMAND_RUNNER_QUEUE="unknown")
+    @override_settings(ADMIN_CMD_RUNNER_QUEUE="unknown")
     def test_unknown(self) -> None:
         """Неизвестный бэкенд → ``ImproperlyConfigured``."""
         from admin_cmd_runner.queue import get_backend

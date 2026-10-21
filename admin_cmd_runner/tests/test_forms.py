@@ -8,13 +8,13 @@ from admin_cmd_runner.forms import StartCommandForm
 class CleanCommandTests(SimpleTestCase):
     """Тесты валидации имени команды."""
 
-    @override_settings(COMMAND_RUNNER_COMMANDS=[{"name": "demo_long_command"}])
+    @override_settings(ADMIN_CMD_RUNNER_COMMANDS=[{"name": "demo_long_command"}])
     def test_allowed(self) -> None:
         """Разрешённая команда проходит валидацию."""
         form = StartCommandForm({"command": "demo_long_command", "args": ""})
         self.assertTrue(form.is_valid(), form.errors)
 
-    @override_settings(COMMAND_RUNNER_COMMANDS=[{"name": "demo_long_command"}])
+    @override_settings(ADMIN_CMD_RUNNER_COMMANDS=[{"name": "demo_long_command"}])
     def test_not_allowed(self) -> None:
         """Неразрешённая команда отклоняется."""
         form = StartCommandForm({"command": "rm_rf", "args": ""})
@@ -25,7 +25,7 @@ class CleanCommandTests(SimpleTestCase):
 class CleanArgsTests(SimpleTestCase):
     """Тесты разбора строки аргументов."""
 
-    @override_settings(COMMAND_RUNNER_COMMANDS=[{"name": "cmd"}])
+    @override_settings(ADMIN_CMD_RUNNER_COMMANDS=[{"name": "cmd"}])
     def test_bad_quotes(self) -> None:
         """Некорректные кавычки дают ошибку валидации."""
         form = StartCommandForm({"command": "cmd", "args": '"unclosed'})
@@ -42,12 +42,12 @@ class SplitArgsKwargsTests(SimpleTestCase):
         form.is_valid()
         return form
 
-    @override_settings(COMMAND_RUNNER_COMMANDS=[{"name": "cmd"}])
+    @override_settings(ADMIN_CMD_RUNNER_COMMANDS=[{"name": "cmd"}])
     def test_empty(self) -> None:
         """Пустая строка → пустые позиционные и kwargs."""
         self.assertEqual(self._form("").split_args_kwargs(), ([], {}))
 
-    @override_settings(COMMAND_RUNNER_COMMANDS=[{"name": "cmd"}])
+    @override_settings(ADMIN_CMD_RUNNER_COMMANDS=[{"name": "cmd"}])
     def test_positional(self) -> None:
         """Только позиционные аргументы."""
         self.assertEqual(
@@ -55,7 +55,7 @@ class SplitArgsKwargsTests(SimpleTestCase):
             (["a", "b", "c"], {}),
         )
 
-    @override_settings(COMMAND_RUNNER_COMMANDS=[{"name": "cmd"}])
+    @override_settings(ADMIN_CMD_RUNNER_COMMANDS=[{"name": "cmd"}])
     def test_kwargs_with_space(self) -> None:
         """``--key value`` → kwarg."""
         self.assertEqual(
@@ -63,7 +63,7 @@ class SplitArgsKwargsTests(SimpleTestCase):
             ([], {"steps": "5"}),
         )
 
-    @override_settings(COMMAND_RUNNER_COMMANDS=[{"name": "cmd"}])
+    @override_settings(ADMIN_CMD_RUNNER_COMMANDS=[{"name": "cmd"}])
     def test_kwargs_with_equals(self) -> None:
         """``--key=value`` → kwarg."""
         self.assertEqual(
@@ -71,7 +71,7 @@ class SplitArgsKwargsTests(SimpleTestCase):
             ([], {"steps": "5"}),
         )
 
-    @override_settings(COMMAND_RUNNER_COMMANDS=[{"name": "cmd"}])
+    @override_settings(ADMIN_CMD_RUNNER_COMMANDS=[{"name": "cmd"}])
     def test_flag(self) -> None:
         """``--flag`` без значения → ``True``."""
         self.assertEqual(
@@ -79,7 +79,7 @@ class SplitArgsKwargsTests(SimpleTestCase):
             ([], {"verbose": True}),
         )
 
-    @override_settings(COMMAND_RUNNER_COMMANDS=[{"name": "cmd"}])
+    @override_settings(ADMIN_CMD_RUNNER_COMMANDS=[{"name": "cmd"}])
     def test_quoted_value(self) -> None:
         """Значения с пробелами можно брать в кавычки."""
         self.assertEqual(
@@ -87,7 +87,7 @@ class SplitArgsKwargsTests(SimpleTestCase):
             ([], {"name": "Hello World"}),
         )
 
-    @override_settings(COMMAND_RUNNER_COMMANDS=[{"name": "cmd"}])
+    @override_settings(ADMIN_CMD_RUNNER_COMMANDS=[{"name": "cmd"}])
     def test_double_dash(self) -> None:
         """Всё после ``--`` считается позиционным."""
         self.assertEqual(
@@ -95,7 +95,7 @@ class SplitArgsKwargsTests(SimpleTestCase):
             (["--literal"], {}),
         )
 
-    @override_settings(COMMAND_RUNNER_COMMANDS=[{"name": "cmd"}])
+    @override_settings(ADMIN_CMD_RUNNER_COMMANDS=[{"name": "cmd"}])
     def test_mixed(self) -> None:
         """Комбинация позиционных и именованных аргументов."""
         self.assertEqual(

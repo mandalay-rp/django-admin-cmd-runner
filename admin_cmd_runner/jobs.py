@@ -5,7 +5,7 @@
 и отвечает за:
 
     * приведение типов kwargs по ``add_argument(type=...)`` команды;
-    * установку ``Reporter`` в качестве stdout/stderr;
+    * установку двух ``Reporter`` (stdout и stderr) в ``call_command``;
     * фиксацию терминального статуса (``success``/``error``/``stopped``);
     * снятие глобального лока после завершения.
 """
@@ -105,6 +105,10 @@ def execute_command(
 ) -> dict[str, str]:
     """Выполняет management-команду в контексте запуска ``run_id``.
 
+    Создаёт два репортёра (для ``stdout`` и ``stderr``), чтобы фронт мог
+    выделять сообщения разных потоков разным цветом. ``self.stdout`` и
+    ``self.stderr`` внутри команды попадают в соответствующие репортёры.
+
     Возвращает словарь ``{"status": <итоговый статус>}``.
     """
     from django.core.management import call_command
@@ -118,20 +122,34 @@ def execute_command(
     store.update_state(run_id, status="running", started_at=store.now_iso())
     set_current_run(run_id)
 
-    reporter = Reporter(run_id)
+    out_reporter = Reporter(run_id, stream=store.STREAM_STDOUT)
+    err_reporter = Reporter(run_id, stream=store.STREAM_STDERR)
+
     try:
-        call_command(command_name, *args, stdout=reporter, stderr=reporter, **kwargs)
+        call_command(
+            command_name,
+            *args,
+            stdout=out_reporter,
+            stderr=err_reporter,
+            **kwargs,
+        )
         if store.is_stop_requested(run_id):
             store.update_state(run_id, status="stopped", finished_at=store.now_iso())
         else:
             store.update_state(run_id, status="success", finished_at=store.now_iso())
     except CommandStopRequested as exc:
         store.update_state(
-            run_id, status="stopped", error=str(exc), finished_at=store.now_iso(),
+            run_id,
+            status="stopped",
+            error=str(exc),
+            finished_at=store.now_iso(),
         )
     except SystemExit:
         store.update_state(
-            run_id, status="stopped", error="terminated", finished_at=store.now_iso(),
+            run_id,
+            status="stopped",
+            error="terminated",
+            finished_at=store.now_iso(),
         )
     except Exception:
         store.update_state(

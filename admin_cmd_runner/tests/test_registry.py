@@ -6,14 +6,14 @@ from admin_cmd_runner.registry import get_available_commands
 
 
 class GetAvailableCommandsTests(SimpleTestCase):
-    """Тесты нормализации ``COMMAND_RUNNER_COMMANDS``."""
+    """Тесты нормализации ``ADMIN_CMD_RUNNER_COMMANDS``."""
 
-    @override_settings(COMMAND_RUNNER_COMMANDS=[])
+    @override_settings(ADMIN_CMD_RUNNER_COMMANDS=[])
     def test_empty(self) -> None:
         """Пустой список команд → пустой результат."""
         self.assertEqual(get_available_commands(), [])
 
-    @override_settings(COMMAND_RUNNER_COMMANDS=["cmd_a", "cmd_b"])
+    @override_settings(ADMIN_CMD_RUNNER_COMMANDS=["cmd_a", "cmd_b"])
     def test_strings(self) -> None:
         """Строки нормализуются в словари с пустым ``args_help``."""
         result = get_available_commands()
@@ -26,7 +26,7 @@ class GetAvailableCommandsTests(SimpleTestCase):
         )
 
     @override_settings(
-        COMMAND_RUNNER_COMMANDS=[
+        ADMIN_CMD_RUNNER_COMMANDS=[
             {"name": "cmd_a"},
             {"name": "cmd_b", "label": "B", "args_help": "--x"},
         ]
