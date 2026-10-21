@@ -11,19 +11,20 @@
 """
 
 import logging
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 import redis
 from django.conf import settings
 from redis import Redis
 from rq import Queue
-from rq.command import send_stop_job_command, send_kill_horse_command
+from rq.command import send_kill_horse_command, send_stop_job_command
 from rq.exceptions import InvalidJobOperation, NoSuchJobError
 from rq.job import Job, JobStatus
 from rq.worker import Worker
 
-from .base import BaseQueueBackend
 from ..jobs import execute_command
+from .base import BaseQueueBackend
 
 logger = logging.getLogger(__name__)
 

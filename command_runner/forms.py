@@ -48,7 +48,7 @@ class StartCommandForm(forms.Form):
         try:
             tokens: list[str] = shlex.split(raw)
         except ValueError as exc:
-            raise forms.ValidationError(f"Не удалось разобрать аргументы: {exc}")
+            raise forms.ValidationError("Не удалось разобрать аргументы") from exc
         return tokens
 
     def split_args_kwargs(self) -> tuple[list[str], dict[str, Any]]:

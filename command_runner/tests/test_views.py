@@ -6,8 +6,9 @@ from unittest.mock import MagicMock, patch
 
 from django.test import RequestFactory
 
-from .base import CacheTestCase, make_staff_user
 from command_runner import store, views
+
+from .base import CacheTestCase, make_staff_user
 
 
 class MonitorPageTests(CacheTestCase):

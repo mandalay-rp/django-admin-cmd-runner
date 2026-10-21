@@ -1,7 +1,8 @@
 """Абстрактный интерфейс бэкенда очереди."""
 
 from abc import ABC, abstractmethod
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 
 class BaseQueueBackend(ABC):

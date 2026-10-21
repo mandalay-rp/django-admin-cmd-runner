@@ -18,8 +18,9 @@ except ImportError:
     celery_execute_command = None
 
 try:
-    from command_runner.queue.rq_backend import RqBackend
     from rq.job import Job, JobStatus
+
+    from command_runner.queue.rq_backend import RqBackend
     HAS_RQ = True
 except ImportError:
     HAS_RQ = False

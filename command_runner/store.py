@@ -13,8 +13,9 @@
 """
 
 import uuid
+from collections.abc import Sequence
 from datetime import datetime, timezone
-from typing import Any, Sequence
+from typing import Any
 
 from django.core.cache import cache
 

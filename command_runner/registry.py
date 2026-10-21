@@ -4,12 +4,12 @@
 (имён команд) или словарей ``{"name": ..., "label": ..., "args_help": ...}``.
 """
 
-from typing import Any, Union
+from typing import Any
 
 from django.conf import settings
 
 CommandSpec = dict[str, str]
-CommandEntry = Union[str, dict[str, Any]]
+CommandEntry = str | dict[str, Any]
 
 
 def get_available_commands() -> list[CommandSpec]:

@@ -1,7 +1,8 @@
 """Тесты модуля :mod:`command_runner.store`."""
 
-from .base import CacheTestCase
 from command_runner import store
+
+from .base import CacheTestCase
 
 
 class LockTests(CacheTestCase):

@@ -11,12 +11,13 @@
 """
 
 import traceback
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 from . import store
 from .reporter import (
-    Reporter,
     CommandStopRequested,
+    Reporter,
     clear_current_run,
     set_current_run,
 )

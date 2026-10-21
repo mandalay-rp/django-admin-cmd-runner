@@ -1,13 +1,14 @@
 """Бэкенд очереди на Celery."""
 
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 
-from celery import shared_task
 from celery import current_app as celery_app
+from celery import shared_task
 from celery.result import AsyncResult
 
-from .base import BaseQueueBackend
 from ..jobs import execute_command
+from .base import BaseQueueBackend
 
 
 @shared_task(name="command_runner.execute_command")

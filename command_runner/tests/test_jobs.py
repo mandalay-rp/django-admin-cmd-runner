@@ -2,9 +2,10 @@
 
 from unittest.mock import patch
 
-from .base import CacheTestCase
 from command_runner import store
 from command_runner.jobs import _coerce_kwargs, execute_command
+
+from .base import CacheTestCase
 
 # Путь до time.sleep в демо-команде — чтобы не ждать в тестах.
 _DEMO_SLEEP = "command_runner.management.commands.demo_long_command.time.sleep"

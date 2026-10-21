@@ -4,7 +4,6 @@ import io
 import sys
 from unittest.mock import patch
 
-from .base import CacheTestCase
 from command_runner import store
 from command_runner.reporter import (
     CommandStopRequested,
@@ -15,6 +14,8 @@ from command_runner.reporter import (
     get_reporter,
     set_current_run,
 )
+
+from .base import CacheTestCase
 
 
 class ReporterTests(CacheTestCase):
