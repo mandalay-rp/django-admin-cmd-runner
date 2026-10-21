@@ -1,0 +1,123 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "Django Command Runner"
+version = "0.1.0"
+description = "Run Django management commands from admin with real-time monitoring and stop"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Alex Jurow", email = "teletoo51@yahoo.com" }]
+keywords = [
+    "django",
+    "management-commands",
+    "celery",
+    "rq",
+    "monitoring",
+    "admin",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Web Environment",
+    "Framework :: Django",
+    "Framework :: Django :: 3.2",
+    "Framework :: Django :: 4.0",
+    "Framework :: Django :: 4.1",
+    "Framework :: Django :: 4.2",
+    "Framework :: Django :: 5.0",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Monitoring",
+    "Typing :: Typed",
+]
+
+dependencies = [
+    "Django>=3.2",
+]
+
+[project.optional-dependencies]
+redis = [
+    "django-redis>=5.0",
+    "redis>=4.0",
+]
+rq = [
+    "rq>=1.10",
+    "redis>=4.0",
+]
+celery = [
+    "celery>=5.0",
+]
+all = [
+    "django-redis>=5.0",
+    "redis>=4.0",
+    "rq>=1.10",
+    "celery>=5.0",
+]
+dev = [
+    "django-redis>=5.0",
+    "redis>=4.0",
+    "rq>=1.10",
+    "celery>=5.0",
+    "ruff",
+    "mypy",
+    "django-stubs",
+    "build",
+    "twine",
+    "pytest",
+    "pytest-django",
+    "pytest-cov",
+]
+
+[project.urls]
+Homepage = "https://github.com/mandalay-rp/django-command-runner"
+Repository = "https://github.com/mandalay-rp/django-command-runner"
+Issues = "https://github.com/mandalay-rp/django-command-runner/issues"
+Changelog = "https://github.com/mandalay-rp/django-command-runner/blob/main/CHANGELOG.md"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["command_runner*"]
+
+# ---------- ruff ----------
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "C4", "SIM"]
+ignore = ["B008"]
+
+[tool.ruff.lint.per-file-ignores]
+"command_runner/tests/*" = ["B", "C4"]
+
+# ---------- mypy ----------
+[tool.mypy]
+python_version = "3.10"
+plugins = ["mypy_django_plugin.main"]
+ignore_missing_imports = true
+files = ["command_runner"]
+
+[tool.django-stubs]
+django_settings_module = "tests.settings"
+
+# ---------- pytest ----------
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "tests.settings"
+python_files = ["test_*.py"]
+testpaths = ["command_runner/tests"]
+addopts = "--cov=command_runner --cov-report=term-missing --cov-fail-under=70"
+
+# ---------- coverage ----------
+[tool.coverage.run]
+source = ["command_runner"]
+omit = ["*/tests/*"]

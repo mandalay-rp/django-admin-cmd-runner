@@ -43,7 +43,7 @@ pip install celery
 ### 2. Скопируйте приложение
 
 Скопируйте пакет `command_runner/` в ваш проект (например, в
-`stroykerbox/apps/command_runner/`) и добавьте его в `INSTALLED_APPS`:
+`your_project_name/apps/command_runner/`) и добавьте его в `INSTALLED_APPS`:
 
 ```python
 INSTALLED_APPS = [
@@ -138,6 +138,80 @@ python manage.py runserver
 5. Нажмите «Остановить» для принудительной остановки. Для задач в
    очереди остановка происходит мгновенно; для выполняющихся —
    через 1–3 секунды (зависит от бэкенда).
+
+## Тестирование
+
+Тесты не требуют Redis, БД или установленных `rq`/`celery`: кэш
+подменяется на `LocMemCache` через `override_settings`, а тесты бэкендов
+пропускаются (`skipUnless`), если соответствующая библиотека не установлена.
+
+### Запуск в проекте
+
+Если `command_runner` подключён в `INSTALLED_APPS` вашего Django-проекта:
+
+```bash
+# все тесты приложения (по app label)
+python manage.py test command_runner
+
+# только пакет тестов
+python manage.py test command_runner.tests
+
+# конкретный модуль
+python manage.py test command_runner.tests.test_store
+
+# конкретный тест-класс
+python manage.py test command_runner.tests.test_store.LockTests
+
+# конкретный метод
+python manage.py test command_runner.tests.test_store.LockTests.test_acquire_and_get
+```
+
+Если приложение подключено по полному пути (`your_project_name.apps.command_runner`),
+используйте label или полный путь к пакету тестов:
+
+```bash
+python manage.py test apps_command_runner
+# или
+python manage.py test your_project_name.apps.command_runner.tests
+```
+
+### Запуск при разработке пакета
+
+Из корня репозитория (там, где `pyproject.toml`):
+
+```bash
+# установить с dev-зависимостями
+pip install -e ".[dev]"
+
+# тесты с покрытием (pytest, конфиг в pyproject.toml)
+make test
+# или
+pytest command_runner/tests
+
+# только линтер
+make lint
+
+# только проверка типов
+make typecheck
+
+# всё сразу (lint + typecheck + test)
+make all
+```
+
+### Покрытие
+
+Порог покрытия задан в `pyproject.toml` (`--cov-fail-under=70`). HTML-отчёт:
+
+```bash
+pytest command_runner/tests --cov-report=html
+open htmlcov/index.html
+```
+
+### Запуск в Docker
+
+```bash
+docker compose exec django python manage.py test command_runner
+```
 
 ## Архитектура
 
@@ -251,7 +325,7 @@ services:
     build: .
     command: python manage.py rqworker default
     environment:
-      - DJANGO_SETTINGS_MODULE=stroykerbox.settings.dev
+      - DJANGO_SETTINGS_MODULE=your_project_name.settings.dev
       - PYTHONUNBUFFERED=1
     volumes:
       - .:/code
