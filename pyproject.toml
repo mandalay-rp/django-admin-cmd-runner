@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "django-admin-cmd-runner"
-version = "0.2.0"
+version = "0.2.1"
 description = "Run Django management commands from admin with real-time monitoring and stop"
 readme = "README.md"
 requires-python = ">=3.10"
