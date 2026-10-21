@@ -1,50 +1,43 @@
 # Command Runner
 
-Django-приложение для запуска management-команд из админки с мониторингом
-выполнения в реальном времени и возможностью принудительной остановки.
+Read this in [Russian](README.ru.md)
 
-## Возможности
+Django application for running management commands from the admin panel with real-time execution monitoring and the ability to forcefully stop them.
 
-- Запуск любой management-команды Django из белого списка через веб-интерфейс.
-- Передача позиционных и именованных аргументов в формате shell
-  (`--steps 5 --name "Hello World"`).
-- Мониторинг выполнения в реальном времени: статус, прогресс-бар, лог.
-- Перехват stdout/stderr команды в лог запуска.
-- Остановка выполнения: задачи в очереди снимаются мгновенно
-  (`job.cancel` для RQ, `revoke` для Celery); выполняющиеся задачи
-  убиваются (`send_stop_job_command` / `kill_horse` для RQ,
-  `revoke(terminate=True)` для Celery).
-- Поддержка двух бэкендов очередей: **Celery** и **RQ** (выбор в настройках).
-- Хранение состояния и логов в общем кэше (Redis).
-- Доступ только для staff-пользователей.
-- Ограничение: одновременно выполняется только одна команда
-  (глобальный лок в Redis).
+## Features
 
-## Требования
+- Run any Django management command from a whitelist via the web interface.
+- Pass positional and named arguments in shell format (`--steps 5 --name "Hello World"`).
+- Real-time execution monitoring: status, progress bar, log.
+- Intercept command stdout/stderr into the run log.
+- Stop execution: queued tasks are removed instantly (`job.cancel` for RQ, `revoke` for Celery); running tasks are killed (`send_stop_job_command` / `kill_horse` for RQ, `revoke(terminate=True)` for Celery).
+- Support for two queue backends: Celery and RQ (selectable in settings).
+- Store state and logs in a shared cache (Redis).
+- Access restricted to staff users only.
+- Limitation: only one command executes at a time (global lock in Redis).
+
+## Requirements
 
 - Python 3.10+
 - Django 3.2+
-- Redis (для кэша и очереди)
-- Один из бэкендов очереди: `celery` + настроенный брокер (Redis/RabbitMQ)
-  или `rq` (использует Redis)
+- Redis (for cache and queue)
+- One of the queue backends: `celery` + configured broker (Redis/RabbitMQ) or `rq` (uses Redis)
 
-## Установка
+## Installation
 
-### 1. Установите зависимости
+### 1. Install dependencies
 
 ```bash
 pip install django django-redis redis
-# для RQ:
+# for RQ:
 pip install rq
-# для Celery:
+# for Celery:
 pip install celery
 ```
 
-### 2. Скопируйте приложение
+### 2. Copy the application
 
-Скопируйте пакет `admin_cmd_runner/` в ваш проект (например, в
-`your_project_name/apps/admin_cmd_runner/`) и добавьте его в `INSTALLED_APPS`:
-
+Copy the `admin_cmd_runner/` package to your project (e.g., `your_project_name/apps/admin_cmd_runner/`) and add it to `INSTALLED_APPS`:
 ```python
 INSTALLED_APPS = [
     # ...
@@ -52,23 +45,23 @@ INSTALLED_APPS = [
 ]
 ```
 
-### 3. Настройте `settings.py`
+### 3. Configure `settings.py`
 
 ```python
-# Выбор бэкенда: "celery" или "rq"
+# Queue backend selection: "celery" or "rq"
 ADMIN_CMD_RUNNER_QUEUE = "rq"
 
-# Redis для RQ-очереди
+# Redis for RQ queue
 ADMIN_CMD_RUNNER_RQ_REDIS_URL = "redis://redis:6379/2"
 ADMIN_CMD_RUNNER_RQ_QUEUE = "default"
 
-# Для django-rq worker: без этого блока воркер подключается к localhost:6379/0
+# For django-rq worker: without this block, the worker connects to localhost:6379/0
 RQ_QUEUES = {
     "default": {"URL": ADMIN_CMD_RUNNER_RQ_REDIS_URL},
     "high":    {"URL": ADMIN_CMD_RUNNER_RQ_REDIS_URL},
 }
 
-# Общий кэш для состояния (обязательно Redis или Memcached)
+# Shared cache for state (Redis or Memcached required)
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
@@ -79,21 +72,20 @@ CACHES = {
     },
 }
 
-# Белый список команд
+# Command whitelist
 ADMIN_CMD_RUNNER_COMMANDS = [
     {
         "name": "demo_long_command",
-        "label": "Демонстрационная долгая команда",
+        "label": "Demo long command",
         "args_help": "--steps N",
     },
     # ...
 ]
 ```
 
-### 4. Подключите URL-маршруты
+### 4. Connect URL routes
 
-В `urls.py` проекта:
-
+In the project's `urls.py`:
 ```python
 from django.urls import include, path
 
@@ -102,271 +94,223 @@ urlpatterns += [
 ]
 ```
 
-### 5. Запустите воркер
+### 5. Start the worker
 
-Для RQ:
+For RQ:
 
 ```bash
-# голый RQ:
+# bare RQ:
 rq worker default
 
-# или через django-rq:
+# or via django-rq:
 python manage.py rqworker default
 ```
 
-Для Celery:
+For Celery:
 
 ```bash
 celery -A proj worker -l info
 ```
 
-### 6. Запустите веб-сервер
+### 6. Start the web server
 
 ```bash
 python manage.py runserver
 ```
 
-## Использование
+## Usage
 
-1. Откройте `/admin-cmd-runner/` под staff-пользователем.
-2. Выберите команду из выпадающего списка.
-3. Введите аргументы (необязательно): позиционные `arg1 arg2`; именованные
-   `--steps 5 --name "Hello World"`; флаги `--verbose` (без значения → `True`);
-   всё после `--` считается позиционным.
-4. Нажмите «Запустить». Откроется страница запуска с прогресс-баром
-   и логом, обновляющимся раз в секунду.
-5. Нажмите «Остановить» для принудительной остановки. Для задач в
-   очереди остановка происходит мгновенно; для выполняющихся —
-   через 1–3 секунды (зависит от бэкенда).
+1. Open `/admin-cmd-runner/` as a staff user.
+2. Select a command from the dropdown list.
+3. Enter arguments (optional): positional `arg1 arg2`; named `--steps 5 --name "Hello World"`; flags `--verbose` (without value → `True`); everything after `--` is considered positional.
+4. Click "Run". A run page will open with a progress bar and a log updating every second.
+5. Click "Stop" to forcefully stop. For queued tasks, stopping is instant; for running tasks, it takes 1–3 seconds (depending on the backend).
 
-## Тестирование
+## Testing
 
-Тесты не требуют Redis, БД или установленных `rq`/`celery`: кэш
-подменяется на `LocMemCache` через `override_settings`, а тесты бэкендов
-пропускаются (`skipUnless`), если соответствующая библиотека не установлена.
+Tests do not require Redis, a database, or installed `rq`/`celery`: the cache is substituted with `LocMemCache` via `override_settings`, and backend tests are skipped (`skipUnless`) if the corresponding library is not installed.
 
-### Запуск в проекте
+### Running in the project
 
-Если `admin_cmd_runner` подключён в `INSTALLED_APPS` вашего Django-проекта:
-
+If `admin_cmd_runner` is connected in your Django project's `INSTALLED_APPS`:
 ```bash
-# все тесты приложения (по app label)
+# all app tests (by app label)
 python manage.py test admin_cmd_runner
-
-# только пакет тестов
+# only the test package
 python manage.py test admin_cmd_runner.tests
-
-# конкретный модуль
+# specific module
 python manage.py test admin_cmd_runner.tests.test_store
-
-# конкретный тест-класс
+# specific test class
 python manage.py test admin_cmd_runner.tests.test_store.LockTests
-
-# конкретный метод
+# specific method
 python manage.py test admin_cmd_runner.tests.test_store.LockTests.test_acquire_and_get
 ```
-
-Если приложение подключено по полному пути (`your_project_name.apps.admin_cmd_runner`),
-используйте label или полный путь к пакету тестов:
-
+If the application is connected by full path (`your_project_name.apps.admin_cmd_runner`), use the label or the full path to the test package:
 ```bash
 python manage.py test apps_admin_cmd_runner
-# или
+# or
 python manage.py test your_project_name.apps.admin_cmd_runner.tests
 ```
 
-### Запуск при разработке пакета (uv)
+### Running during package development (uv)
 
-Из корня репозитория (там, где `pyproject.toml`):
-
+From the repository root (where `pyproject.toml` is located):
 ```bash
-# установить uv (один раз)
+# install uv (once)
 curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# создать виртуальное окружение и установить пакет
-# в editable-режиме со всеми dev-зависимостями
+# create a virtual environment and install the package
+# in editable mode with all dev dependencies
 uv sync --extra dev
-
-# тесты с покрытием (конфиг pytest — в pyproject.toml)
+# tests with coverage (pytest config is in pyproject.toml)
 uv run pytest admin_cmd_runner/tests
-
-# только линтер
+# only linter
 uv run ruff check admin_cmd_runner tests
-
-# только проверка типов
+# only type checking
 uv run mypy admin_cmd_runner
-
-# всё сразу (lint + typecheck + test)
+# everything at once (lint + typecheck + test)
 uv run ruff check admin_cmd_runner tests \
   && uv run mypy admin_cmd_runner \
   && uv run pytest admin_cmd_runner/tests
 ```
-
-Управление зависимостями:
+Dependency management:
 
 ```bash
-# добавить dev-зависимость
+# add a dev dependency
 uv add --dev pytest-xdist
 
-# обновить lock-файл без установки
+# update lock file without installing
 uv lock
 
-# синхронизировать окружение с lock-файлом
+# synchronize environment with lock file
 uv sync --extra dev
 
-# конкретная версия Python
+# specific Python version
 uv python install 3.12
 uv venv --python 3.12
 ```
 
-### Покрытие
+### Coverage
 
-Порог покрытия задан в `pyproject.toml` (`--cov-fail-under=70`). HTML-отчёт:
-
+Coverage threshold is set in `pyproject.toml` (`--cov-fail-under=70`). HTML report:
 ```bash
 uv run pytest admin_cmd_runner/tests --cov-report=html
 open htmlcov/index.html
 ```
 
-### Запуск в Docker
+### Running in Docker
 
 ```bash
 docker compose exec django python manage.py test admin_cmd_runner
 ```
 
-## Архитектура
+## Architecture
 
-```
+```text
 admin_cmd_runner/
-├── __init__.py             — описание приложения
-├── apps.py                 — AppConfig
-├── admin.py                — без моделей, только подсказка по меню
-├── urls.py                 — URL-маршруты
-├── views.py                — монитор, запуск, остановка, статус
-├── forms.py                — форма и парсер аргументов
-├── registry.py             — реестр доступных команд из settings
-├── store.py                — состояние и логи в общем кэше
-├── reporter.py             — Reporter для прогресса и остановки
-├── jobs.py                 — транспортно-независимое исполнение команды
-├── queue/
-│   ├── __init__.py         — фабрика бэкендов
-│   ├── base.py             — абстрактный интерфейс
-│   ├── celery_backend.py   — реализация на Celery
-│   └── rq_backend.py       — реализация на RQ
-├── management/
-│   └── commands/
-│       ├── _base.py        — ReporterCommand с доступом к reporter
-│       └── demo_long_command.py — демо-команда с прогрессом и stop
-└── templates/
-    └── admin_cmd_runner/
-        └── monitor.html    — UI с polling
+ ├── __init__.py             — application description
+ ├── apps.py                 — AppConfig
+ ├── admin.py                — no models, only menu hint
+ ├── urls.py                 — URL routes
+ ├── views.py                — monitor, run, stop, status
+ ├── forms.py                — form and argument parser
+ ├── registry.py             — registry of available commands from settings
+ ├── store.py                — state and logs in shared cache
+ ├── reporter.py             — Reporter for progress and stopping
+ ├── jobs.py                 — transport-independent command execution
+ ├── queue/
+ │   ├── __init__.py         — backend factory
+ │   ├── base.py             — abstract interface
+ │   ├── celery_backend.py   — Celery implementation
+ │   └── rq_backend.py       — RQ implementation
+ ├── management/
+ │   └── commands/
+ │       ├── _base.py        — ReporterCommand with access to reporter
+ │       └── demo_long_command.py — demo command with progress and stop
+ └── templates/
+     └── admin_cmd_runner/
+         └── monitor.html    — UI with polling
 ```
 
-### Поток выполнения
+## Execution Flow
 
-1. **Запуск.** `start_run` валидирует форму, захватывает глобальный лок
-   (`cache.add`), создаёт состояние (`status=queued`), ставит задачу в
-   бэкенд очереди и сохраняет `task_id`.
-2. **Исполнение.** Воркер вызывает `execute_command`, которая приводит
-   типы `kwargs` по `add_argument(type=...)`, ставит `status=running`,
-   устанавливает `Reporter` в качестве stdout, выполняет команду через
-   `call_command` и в `finally` фиксирует терминальный статус и снимает лок.
-3. **Мониторинг.** Фронт раз в секунду запрашивает `status_api`, который
-   возвращает состояние и новые строки лога (`since=N`).
-4. **Остановка.** `stop_run` выставляет флаг `stop`, вызывает
-   `backend.revoke(task_id)`: для `queued` — задача снимается, статус
-   сразу `stopped`; для `started` — отправляется команда остановки,
-   статус `stopping`, а финализация в `stopped` происходит в `status_api`
-   по факту смерти процесса в бэкенде (или по таймауту `STOP_GRACE_SECONDS`).
+- **Start.** `start_run` validates the form, acquires a global lock (`cache.add`), creates state (`status=queued`), enqueues the task in the backend, and saves `task_id`.
+- **Execution.** The worker calls `execute_command`, which casts `kwargs` types according to `add_argument(type=...)`, sets `status=running`, sets `Reporter` as stdout, executes the command via `call_command`, and in `finally` fixes the terminal status and releases the lock.
+- **Monitoring.** The frontend requests `status_api` every second, which returns the state and new log lines (`since=N`).
+- **Stop.** `stop_run` sets the `stop` flag, calls `backend.revoke(task_id)`: for `queued` — the task is removed, status immediately becomes `stopped`; for `started` — a stop command is sent, status becomes `stopping`, and finalization to `stopped` happens in `status_api` upon the actual death of the backend process (or after `STOP_GRACE_SECONDS` timeout).
 
-### Хранилище (Redis)
+## Storage (Redis)
 
-| Ключ                    | Назначение                                  | TTL    |
-|-------------------------|---------------------------------------------|--------|
-| `admin_cmd_runner:lock`           | id активного запуска (один на проект)       | 24 ч   |
-| `admin_cmd_runner:state:<run_id>` | состояние запуска (status, progress, error) | 24 ч   |
-| `admin_cmd_runner:log:<run_id>`   | лог (список строк, ограничен 2000 записей)  | 24 ч   |
-| `admin_cmd_runner:stop:<run_id>`  | флаг запроса остановки                      | 6 ч    |
-| `admin_cmd_runner:task:<run_id>`  | task_id/job_id в бэкенде                    | 24 ч   |
+| Key | Purpose | TTL |
+| --- | --- | --- |
+| `admin_cmd_runner:lock` | ID of active run (one per project) | 24 h |
+| `admin_cmd_runner:state:<run_id>` | run state (status, progress, error) | 24 h |
+| `admin_cmd_runner:log:<run_id>` | log (list of strings, limited to 2000 entries) | 24 h |
+| `admin_cmd_runner:stop:<run_id>` | stop request flag | 6 h |
+| `admin_cmd_runner:task:<run_id>` | task_id/job_id in the backend | 24 h |
 
-**Важно:** кэш должен быть общим для всех процессов (web и worker),
-поэтому `LocMemCache` не подходит — нужен Redis или Memcached.
+**Important:** the cache must be shared across all processes (web and worker), so `LocMemCache` is not suitable — Redis or Memcached is required.
 
-## Написание собственных команд
+## Writing Custom Commands
 
-Наследуйтесь от `ReporterCommand`, чтобы получить доступ к
-`self.reporter` (прогресс, лог, проверка остановки):
-
+Inherit from `ReporterCommand` to get access to `self.reporter` (progress, log, stop check):
 ```python
 from admin_cmd_runner.management.commands._base import ReporterCommand
 
-
 class Command(ReporterCommand):
-    help = "Что делает команда"
-
+    help = "What the command does"
+    
     def add_arguments(self, parser):
         parser.add_argument("--count", type=int, default=10)
-
+        
     def handle(self, *args, **options):
         count = options["count"]
         for i in range(count):
-            self.reporter.check_stop()  # поднимет CommandStopRequested при stop
-            self.stdout.write(f"Шаг {i + 1}/{count}")  # попадёт в лог
+            self.reporter.check_stop()  # raises CommandStopRequested on stop
+            self.stdout.write(f"Step {i + 1}/{count}")  # goes to log
             self.reporter.progress(
                 int((i + 1) / count * 100),
-                f"Шаг {i + 1}/{count}",
+                f"Step {i + 1}/{count}",
             )
-            # ... полезная работа ...
+            # ... useful work ...
 ```
-
-Если команда не наследует `ReporterCommand`, она всё равно попадёт
-в лог (stdout перехватывается), но не сможет обновлять прогресс и
-кооперативно проверять флаг остановки (останется только жёсткий kill).
+If a command does not inherit from `ReporterCommand`, it will still go to the log (stdout is intercepted), but it won't be able to update progress and cooperatively check the stop flag (only a hard kill will remain).
 
 ## Docker Compose
 
-Пример для запуска вместе с Redis и воркером RQ:
-
+Example for running together with Redis and an RQ worker:
 ```yaml
 services:
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-
-  django:
-    build: .
-    command: python manage.py runserver 0.0.0.0:8000
-    volumes:
-      - .:/code
-    depends_on:
-      - redis
-
-  rq:
-    build: .
-    command: python manage.py rqworker default
-    environment:
-      - DJANGO_SETTINGS_MODULE=your_project_name.settings.dev
-      - PYTHONUNBUFFERED=1
-    volumes:
-      - .:/code
-    depends_on:
-      - redis
-      - django
-    restart: "always"
-    # ВАЖНО: не добавляйте stdin_open: true — иначе rqworker
-    # получит EOF на stdin и будет завершаться каждые ~30 секунд.
+   redis:
+     image: redis:7-alpine
+     ports:
+       - "6379:6379"
+   django:
+     build: .
+     command: python manage.py runserver 0.0.0.0:8000
+     volumes:
+       - .:/code
+     depends_on:
+       - redis
+   rq:
+     build: .
+     command: python manage.py rqworker default
+     environment:
+       - DJANGO_SETTINGS_MODULE=your_project_name.settings.dev
+       - PYTHONUNBUFFERED=1
+     volumes:
+       - .:/code
+     depends_on:
+       - redis
+       - django
+     restart: "always"
+     # IMPORTANT: do not add stdin_open: true — otherwise rqworker
+     # will get EOF on stdin and will terminate every ~30 seconds.
 ```
 
-## Известные ограничения
+## Known Limitations
 
-- Одновременно выполняется только одна команда (глобальный лок).
-- Стандартный `int`/`float`-парсинг kwargs работает через
-  `add_argument(type=...)` команды; для кастомных типов (например
-  `datetime`) используйте callable-`type`, он будет вызван.
-- Лог ограничен 2000 строками на запуск (старые обрезаются).
-- `kill_horse` в RQ не даёт выполниться `finally` — финализация
-  статуса происходит на стороне web-процесса через `status_api`.
-- 1–2 лишних запроса `/status/` после нажатия «Остановить» —
-  неизбежны: они попадают в окно между кликом и фактической
-  смертью процесса воркера.
+- Only one command executes at a time (global lock).
+- Standard `int`/`float` kwargs parsing works via the command's `add_argument(type=...)`; for custom types (e.g., `datetime`), use a callable `type`, which will be invoked.
+- The log is limited to 2000 lines per run (older ones are truncated).
+- `kill_horse` in RQ does not allow `finally` to execute — status finalization happens on the web process side via `status_api`.
+- 1–2 extra `/status/` requests after clicking "Stop" are inevitable: they fall into the window between the click and the actual death of the worker process.
