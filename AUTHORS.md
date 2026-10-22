@@ -1,6 +1,4 @@
-# Авторы
+Project Author
+===============
 
-## Основные разработчики
-
-- **Alex Jurow** — автор и мейнтейнер — you@example.com
-ub.com/USERNAME/django-admin-cmd-runner/graphs/contributors>. -->
+- **Alex Jurow** — author and maintainer — teletoo51@yahoo.com
