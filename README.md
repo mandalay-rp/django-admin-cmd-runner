@@ -16,6 +16,8 @@ Django application for running management commands from the admin panel with rea
 - Access restricted to staff users only.
 - Limitation: only one command executes at a time (global lock in Redis).
 
+  ![Command_Runner: screenshot of the app page](images/command_runner_sreenshot.png)
+
 ## Requirements
 
 - Python 3.10+

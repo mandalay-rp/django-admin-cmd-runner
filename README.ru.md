@@ -22,6 +22,8 @@ Django-приложение для запуска management-команд из �
 - Ограничение: одновременно выполняется только одна команда
   (глобальный лок в Redis).
 
+  ![Command_Runner: screenshot of the app page](images/command_runner_sreenshot.png)
+
 ## Требования
 
 - Python 3.10+
