@@ -37,9 +37,14 @@ pip install rq
 pip install celery
 ```
 
-### 2. Copy the application
+### 2. Install the application
 
-Copy the `admin_cmd_runner/` package to your project (e.g., `your_project_name/apps/admin_cmd_runner/`) and add it to `INSTALLED_APPS`:
+```bash
+pip install django-admin-cmd-runner
+```
+
+And add it to `INSTALLED_APPS`:
+
 ```python
 INSTALLED_APPS = [
     # ...
